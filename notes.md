@@ -11,6 +11,11 @@ This file represents what I have learned about web programming.
 - [Canvas](https://byu.instructure.com)
 - [MDN](https://developer.mozilla.org)
 
+## Intro
+
+#### Interesting things I've learned in the intro 
+As I've used Github more and more, it's been interesting to see the changes. I learned that if you try to clone the repo using the https address, it attempts to use password verification; only by using the ssh address does it use my actual ssh key to access the repository. 
+
 ## AWS
 
 Interesting things I have learned about AWS
