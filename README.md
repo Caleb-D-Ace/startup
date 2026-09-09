@@ -74,7 +74,7 @@ I am going to use the required technologies in the following ways.
 
 For this deliverable I did the following. I checked the box `[x]` and added a description for things I completed.
 
-- [ ] I completed the prerequisites for this deliverable (Git commit requirement)
+- [x] I completed the prerequisites for this deliverable (Git commit requirement)
 - [x] Proper use of Markdown
 - [x] A concise and compelling elevator pitch
 - [x] Description of key features
