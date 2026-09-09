@@ -11,36 +11,14 @@ Paintwall is a public shared canvas with digital paint tools. Users can "log in"
 > If you are not familiar with Markdown then you should review the [documentation](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax) before continuing.
 
 ### Elevator pitch
-Shared digital canvases such as r/place have become massive community events, but they are time-limited by nature. What if there was a public canvas that simply... stayed? Paintwall is a public digital graffiti wall where every pixel remembers who drew it. Featuring digital paint tools, a real-time shared canvas, and individual attribution for every drawing, Paintwall is a fun and creative application that showcases the power of websocket and individual artists.
 
-**HTML** - One properly-structured HTML page (index.html) serving as the mount point for the React app. Uses semantic elements (\<header\>, \<main\>, \<canvas\>, etc.) for the app shell.
-
-**CSS** - Application uses CSS to provide website styling and drawing components (this may require more javascript than css; unsure right now) and to ensure that the website looks good on mobile (vertical AND horizontal) and pc.
-
-**React** - Component-based views for logged-out (canvas + click-to-inspect ownership) and logged-in (adds drawing toolbar) states. Routes between these based on auth state — no page reload. Handles login, artist ownership display, backend endpoint calls.
-
-**Service** - Backend service with endpoints for:
-
-	- Combined register/login and logout users (this application can collate the login and register functions into one, considering it won't store any PII and doesn't require great security)
-
-	- Logout to end session and return to the logged-out state
-
-	- Color pallet recommendations provided by the api at https://www.thecolorapi.com/
-
-	- Saving the current canvas (might not need an endpoint; should already be loaded into the local HTML canvas element.)
-
-	- Getting the current canvas for initial page load
-	
-	- Get the username of whoever painted the selected pixel
-
-DB- Store pixel ownership (x, y, color, user_id), user accounts (username, optional password hash), and session/auth tokens in the database.
-WebSocket- Submit a finished or partially-finished stroke from the user to the backend, renders other users' strokes live without polling or refreshing, and displays a live user count.
+Shared digital canvases such as r/place have become massive community events, but they are time-limited by nature. What if there was a public canvas that simply... stayed? Paintwall is a public digital graffiti wall where every pixel remembers who drew it. Featuring digital paint tools, a real-time shared canvas, and individual attribution for every drawing, Paintwall is a fun and creative application that showcases the power of WebSocket and individual artists.
 
 ### Design
 
 ![Design image](images/app_mockup.png)
 
-This sequence diagram shows how user A can log i
+This sequence diagram shows how user Caleb can log in and paint a stroke, while user Sarah can view the canvas, which dynamically updates as user Caleb paints.
 
 ```mermaid
 sequenceDiagram
@@ -68,20 +46,26 @@ sequenceDiagram
 
 ### Key features
 
-- Describe your key feature
-- Describe your key feature
-- Describe your key feature
+- Real-time collaborative canvas — watch other users' strokes appear live as they paint, with no refresh needed
+- Full attribution — click any painted pixel to see exactly who drew it and when
+- Zero-friction identity — jump in with just a username; add a password only if you want to protect it from being used by others
+- Color palette suggestions — pull complementary color schemes from a third-party color API while you paint
+- Permanent canvas — unlike time-limited events, the wall persists between sessions instead of resetting
 
 ### Technologies
 
 I am going to use the required technologies in the following ways.
 
-- **HTML** - Description here
-- **CSS** - Description here
-- **React** - Description here
-- **Service** - Description here
-- **DB/Login** - Description here
-- **WebSocket** - Description here
+- **HTML** - One properly-structured HTML page (index.html) serving as the mount point for the React app. Uses semantic elements (`<header>`, `<main>`, `<canvas>`, etc.) for the app shell.
+- **CSS** - Application uses CSS to provide website styling and drawing components (this may require more JavaScript than CSS; unsure right now) and to ensure the website looks good on mobile (vertical AND horizontal) and PC.
+- **React** - Component-based views for logged-out (canvas + click-to-inspect ownership) and logged-in (adds drawing toolbar) states. Routes between these based on auth state — no page reload. Handles login, artist ownership display, and backend endpoint calls.
+- **Service** - Backend service with endpoints for:
+  - Combined register/login and logout for users (this application can collate the login and register functions into one, since it won't store any PII and doesn't require great security)
+  - Color palette recommendations provided by the API at https://www.thecolorapi.com/
+  - Getting the current canvas state for initial page load
+  - Getting the username of whoever painted a selected pixel
+- **DB** - Stores pixel ownership (x, y, color, user_id), user accounts (username, optional password hash), and session/auth tokens.
+- **WebSocket** - Submits a finished or partially-finished stroke from the user to the backend, renders other users' strokes live without polling or refreshing, and broadcasts a live user count.
 
 ## 🚀 Specification Deliverable
 
@@ -91,11 +75,11 @@ I am going to use the required technologies in the following ways.
 For this deliverable I did the following. I checked the box `[x]` and added a description for things I completed.
 
 - [ ] I completed the prerequisites for this deliverable (Git commit requirement)
-- [ ] Proper use of Markdown
-- [ ] A concise and compelling elevator pitch
-- [ ] Description of key features
-- [ ] Description of how you will use each technology including your 3rd party API and use of WebSocket
-- [ ] One or more rough sketches of your application. Images must be embedded in this file using Markdown image references.
+- [x] Proper use of Markdown
+- [x] A concise and compelling elevator pitch
+- [x] Description of key features
+- [x] Description of how you will use each technology including your 3rd party API and use of WebSocket
+- [x] One or more rough sketches of your application. Images must be embedded in this file using Markdown image references.
 
 ## 🚀 AWS deliverable
 
