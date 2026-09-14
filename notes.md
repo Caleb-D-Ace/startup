@@ -20,7 +20,10 @@ I've also learned that I love web programming. That's news to me; let's make it 
 
 ## AWS
 
-Interesting things I have learned about AWS
+Current public IP address: 54.89.249.18
+Right now, due to the server running on the HTTP protocol (not secure HTTP), I have to manually type "http" because firefox (and most modern browsers) default to using HTTPS. I can ssh in and verify that the files are correct. I may have to use a DNS in order to make the website accessible via HTTPS. I don't really want to pay for that, so I'll stick with the public ip address until I have to.
+
+I also learned where to put the .pem file on my system (in the .ssh folder) and that the file name doesn't have any special relevance beyond being that .pem file's identifying filename.
 
 ## HTML
 
