@@ -20,10 +20,16 @@ I've also learned that I love web programming. That's news to me; let's make it 
 
 ## AWS
 
+EC2 is in charge of web server instances.
 Current public IP address: 54.89.249.18
-Right now, due to the server running on the HTTP protocol (not secure HTTP), I have to manually type "http" because firefox (and most modern browsers) default to using HTTPS. I can ssh in and verify that the files are correct. I may have to use a DNS in order to make the website accessible via HTTPS. I don't really want to pay for that, so I'll stick with the public ip address until I have to.
+Right now, due to the server running on the HTTP protocol (not secure HTTP), I have to manually type "http" because firefox (and most modern browsers) default to using HTTPS. I can ssh in and verify that the files are correct.
 
 I also learned where to put the .pem file on my system (in the .ssh folder) and that the file name doesn't have any special relevance beyond being that .pem file's identifying filename.
+
+I need to do another refresher on how to use vim... If I edit the Caddyfile object in the server, I can enable HTTPS by changing the headers/rules to connect to the DNS. Caddy will automatically create a certificate for my website so that secure connections are possible.
+
+Route53 is in charge of the domain name.
+Domain name: [paintwall.net](https://paintwall.net/)
 
 ## HTML
 
