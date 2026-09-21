@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Paintwall - My Avatar</title>
+  </head>
+  <body>
+    <header>
+      <div id="brand">
+        <h1>Paintwall</h1>
+      </div>
+
+      <nav>
+        <menu>
+          <li><a href="index.html">The Wall</a></li>
+          <li><a href="artists.html">Top Artists</a></li>
+          <li><a href="profile.html">My Avatar</a></li>
+          <li><a href="about.html">About</a></li>
+        </menu>
+      </nav>
+
+      <!-- Authentication placeholder -->
+      <div id="header-auth">
+        <form id="auth-form" action="#" method="post">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" placeholder="Username" required />
+
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="Password" />
+
+          <button type="submit" id="login-btn">Login</button>
+        </form>
+        <p id="register-hint">New here? Just enter a username and click Login to create an account.</p>
+
+        <div id="profile-panel">
+          <span>
+            Welcome, <span id="current-username">CalebD</span>
+            <span id="user-level">(Level 3)</span>
+          </span>
+          <button type="button" id="logout-btn">Logout</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <!-- Application data placeholder: the user's personal avatar canvas -->
+      <section id="avatar-section">
+        <h2>My Avatar</h2>
+        <p>
+          Paint your own 400&times;400 avatar using the same tools as the wall. It is not
+          associated with pixel ownership, so it stays small and simple to store.
+        </p>
+        <p>
+          Unlike the wall, your avatar is <strong>not</strong> sent to the server as you
+          paint. It stays local to your browser until you click "Set Avatar" below.
+        </p>
+
+        <canvas
+          id="avatar-canvas"
+          width="400"
+          height="400"
+          style="border: 2px dashed gray; background-color: #e0e0e0;"
+        >
+          Your browser does not support the canvas element. This is where your avatar will be
+          painted.
+        </canvas>
+
+        <div id="avatar-toolbar">
+          <h3>Drawing Tools</h3>
+
+          <label for="avatar-color-picker">Brush color</label>
+          <input type="color" id="avatar-color-picker" value="#3b7ddd" />
+
+          <label for="avatar-brush-style">Brush style</label>
+          <select id="avatar-brush-style" name="avatar-brush-style">
+            <option value="round">Round</option>
+            <option value="square">Square</option>
+            <option value="spray">Spray</option>
+            <option value="calligraphy">Calligraphy</option>
+          </select>
+
+          <label for="avatar-brush-size">Brush size</label>
+          <input type="range" id="avatar-brush-size" name="avatar-brush-size" min="1" max="50" value="5" />
+
+          <button type="button" id="set-avatar-btn">Set Avatar</button>
+        </div>
+      </section>
+
+      <!-- Database data placeholder: XP earned from pixels painted on the wall -->
+      <section id="stats-section">
+        <h2>Player Statistics</h2>
+        <p>
+          Every batch of pixels the server receives from you on the wall adds experience.
+          Level up the more you paint!
+        </p>
+        <progress id="xp-bar" value="420" max="1000">42%</progress>
+        <p><span id="xp-label">420 / 1000 XP</span> to Level 4</p>
+      </section>
+    </main>
+
+    <footer>
+      <p>
+        Paintwall &mdash; a startup project by Caleb D for CS 260.
+        <a href="https://github.com/Caleb-D-Ace/startup" target="_blank" rel="noopener">View source on GitHub</a>
+      </p>
+    </footer>
+  </body>
+</html>
