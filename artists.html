@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Paintwall - Top Artists</title>
+  </head>
+  <body>
+    <header>
+      <div id="brand">
+        <h1>Paintwall</h1>
+      </div>
+
+      <nav>
+        <menu>
+          <li><a href="index.html">The Wall</a></li>
+          <li><a href="artists.html">Top Artists</a></li>
+          <li><a href="profile.html">My Avatar</a></li>
+          <li><a href="about.html">About</a></li>
+        </menu>
+      </nav>
+
+      <!-- Authentication placeholder -->
+      <div id="header-auth">
+        <form id="auth-form" action="#" method="post">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" placeholder="Username" required />
+
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="Password" />
+
+          <button type="submit" id="login-btn">Login</button>
+        </form>
+        <p id="register-hint">New here? Just enter a username and click Login to create an account.</p>
+
+        <div id="profile-panel">
+          <span>
+            Welcome, <span id="current-username">CalebD</span>
+            <span id="user-level">(Level 3)</span>
+          </span>
+          <button type="button" id="logout-btn">Logout</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <!-- Database data placeholder -->
+      <section id="leaderboard-section">
+        <h2>Top Artists</h2>
+        <p>Rankings are pulled from the pixels stored in the database, ordered by pixel count.</p>
+
+        <table id="leaderboard">
+          <thead>
+            <tr>
+              <th scope="col">Rank</th>
+              <th scope="col">Avatar</th>
+              <th scope="col">Username</th>
+              <th scope="col">Pixels Painted</th>
+              <th scope="col">Last Active</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td><img src="placeholder.png" alt="CalebD avatar" width="32" height="32" /></td>
+              <td>CalebD</td>
+              <td>4,281</td>
+              <td>2026-09-16</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td><img src="placeholder.png" alt="Sarah avatar" width="32" height="32" /></td>
+              <td>Sarah</td>
+              <td>3,904</td>
+              <td>2026-09-15</td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td><img src="placeholder.png" alt="anon_guest avatar" width="32" height="32" /></td>
+              <td>anon_guest</td>
+              <td>1,220</td>
+              <td>2026-09-14</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+
+    <footer>
+      <p>
+        Paintwall &mdash; a startup project by Caleb D for CS 260.
+        <a href="https://github.com/Caleb-D-Ace/startup" target="_blank" rel="noopener">View source on GitHub</a>
+      </p>
+    </footer>
+  </body>
+</html>
