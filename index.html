@@ -51,15 +51,17 @@
         <p>
           The canvas automatically updates in real-time as you paint on the wall. Select your brush and start painting!
         </p>
-        <canvas
-          id="paintwall-canvas"
-          width="600"
-          height="400"
-          style="border: 2px dashed gray; background-color: #e0e0e0;"
-        >
-          Your browser does not support the canvas element. This is where the shared pixel
-          wall will be rendered.
-        </canvas>
+        <div id="canvas-scroll" style="max-width: 100%; height: 600px; overflow: auto;">
+          <canvas
+            id="paintwall-canvas"
+            width="2000"
+            height="2000"
+            style="border: 2px dashed gray; background-color: #e0e0e0;"
+          >
+            Your browser does not support the canvas element. This is where the shared pixel
+            wall will be rendered.
+          </canvas>
+        </div>
 
         <div id="toolbar">
           <h3>Drawing Tools</h3>
