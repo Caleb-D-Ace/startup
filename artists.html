@@ -33,12 +33,18 @@
         </form>
         <p id="register-hint">New here? Just enter a username and click Login to create an account.</p>
 
-        <div id="profile-panel">
+        <div id="welcome">
           <span>
             Welcome, <span id="current-username">CalebD</span>
+            <button type="button" id="logout-btn">Logout</button>
+          </span>
+        </div>
+        <div id="profile-panel">
+          <span>
+            <label for="meter">EXP: </label>
+            <meter id="meter" min="0" max="100" value="50" low="33" high="66" optimum="50"></meter>
             <span id="user-level">(Level 3)</span>
           </span>
-          <button type="button" id="logout-btn">Logout</button>
         </div>
       </div>
     </header>
