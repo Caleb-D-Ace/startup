@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Paint your own Paintwall avatar and track your painting level and experience." />
     <title>Paintwall - My Avatar</title>
   </head>
   <body>
@@ -12,12 +13,12 @@
       </div>
 
       <nav>
-        <menu>
+        <ul>
           <li><a href="index.html">The Wall</a></li>
           <li><a href="artists.html">Top Artists</a></li>
           <li><a href="profile.html">My Avatar</a></li>
           <li><a href="about.html">About</a></li>
-        </menu>
+        </ul>
       </nav>
 
       <!-- Authentication placeholder -->
@@ -38,6 +39,7 @@
             Welcome, <span id="current-username">CalebD</span>
             <span id="user-level">(Level 3)</span>
           </span>
+          <meter id="header-xp-bar" min="0" max="1000" value="420" aria-label="Experience toward next level"></meter>
           <button type="button" id="logout-btn">Logout</button>
         </div>
       </div>
