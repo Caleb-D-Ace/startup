@@ -93,16 +93,16 @@ For this deliverable I did the following. I checked the box `[x]` and added a de
 
 For this deliverable I did the following. I checked the box `[x]` and added a description for things I completed.
 
-- [ ] I completed the prerequisites for this deliverable (Simon deployed, GitHub link, Git commits)
-- [ ] **HTML pages** - I did not complete this part of the deliverable.
-- [ ] **Proper HTML element usage** - I did not complete this part of the deliverable.
-- [ ] **Links** - I did not complete this part of the deliverable.
-- [ ] **Text** - I did not complete this part of the deliverable.
-- [ ] **3rd party API placeholder** - I did not complete this part of the deliverable.
-- [ ] **Images** - I did not complete this part of the deliverable.
-- [ ] **Login placeholder** - I did not complete this part of the deliverable.
-- [ ] **DB data placeholder** - I did not complete this part of the deliverable.
-- [ ] **WebSocket placeholder** - I did not complete this part of the deliverable.
+- [x] I completed the prerequisites for this deliverable (Simon deployed, GitHub link, Git commits)
+- [x] **HTML pages** - Created `index.html` (the wall + auth), `artists.html` (leaderboard), `profile.html` (personal avatar painter + drawing score), and `about.html` (pitch/features/tech), each with a shared header/nav/footer.
+- [x] **Proper HTML element usage** - Used semantic elements throughout: `header`, `nav`, `ul`, `main`, `section`, `article`, `aside`-style `fieldset`, `figure`/`figcaption`, `table`, `dl`, `canvas`, and `form`. Verified by AI to be proper.
+- [x] **Links** - Nav links between all three pages on every page, plus external links to the GitHub repo and the TheColorAPI third-party service.
+- [x] **Text** - Elevator pitch, feature list, and technology descriptions from the specification are rendered as page content on `about.html`. All other pages contain brief descriptions of how to interact with the website, and player information is simulated at the bottom of `index.html`.
+- [x] **3rd party API placeholder** - `index.html` has a color palette suggestions panel that will be populated from https://www.thecolorapi.com/.
+- [x] **Images** - `about.html` embeds `images/app_mockup.png`; `artists.html` uses `placeholder.png` as avatar placeholders. 
+- [x] **Login placeholder** - `index.html` has a login/register form and a logged-in profile panel showing the current username. Upon CSS implementation, the login forms will disappear once the user is logged in.
+- [x] **DB data placeholder** - `artists.html` renders a leaderboard table of top painters that will be populated from stored pixel/user data. The player's level shows next to their username in the header on every page, and `profile.html` has a player statistics section with an XP bar that increases as pixel batches are stored for the wall.
+- [x] **WebSocket placeholder** - `index.html` has a live activity feed and viewer count that will be populated from WebSocket messages. The canvas itself will also update via websocket.
 
 ## 🚀 CSS deliverable
 
