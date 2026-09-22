@@ -56,7 +56,7 @@ When including video links, you can make them autoplay audio! Don't do this.
 Also, for a standard `<video>` element, you need to get the link to the hosted video file, not a link to the player. Or you have to host it yourself.
 
 How to deploy:
-`./deployFiles.sh -k ~/folder/LeifErickson.pem -h paintwall.net -s <subdomain>`
+`./deployFiles.sh -k ~/folder/deployable.pem -h paintwall.net -s <subdomain>`
 
 ## React
 
