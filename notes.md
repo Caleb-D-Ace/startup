@@ -33,7 +33,30 @@ Domain name: [paintwall.net](https://paintwall.net/)
 
 ## HTML
 
-Interesting things I have learned about HTML
+Div elements are useful for cordoning off components and placing them on a new line. Head sections will add a title to the webpage for displaying in tabs.
+
+- `<p>` = paragraph
+- `<span>` = generic inline container
+- `<nav>` = Allows for navigation links on the website or on the page
+- `<aside>` = section tangentially related, usually as a sidebar or call-out box.
+- `<b>` = Bold text in a section (inline element)
+
+If I'm not mistaken, I believe that typically the contents of a webpage are all placed in the `<body>` section.
+
+> **Note:** According to the HTML5 specification, the `<b>` tag should be used as a LAST resort when no other tag is more appropriate. The specification states that:
+>
+> - headings should be denoted with the `<h1>` to `<h6>` tags
+> - emphasized text should be denoted with the `<em>` tag
+> - important text should be denoted with the `<strong>` tag
+> - marked/highlighted text should be denoted with the `<mark>` tag
+>
+> Source: [W3Schools: HTML `<b>` tag](https://www.w3schools.com/tags/tag_b.asp)
+
+When including video links, you can make them autoplay audio! Don't do this.
+Also, for a standard `<video>` element, you need to get the link to the hosted video file, not a link to the player. Or you have to host it yourself.
+
+How to deploy:
+`./deployFiles.sh -k ~/folder/LeifErickson.pem -h paintwall.net -s <subdomain>`
 
 ## React
 
