@@ -1,6 +1,7 @@
 # Paintwall (Co-op Grafitti Canvas)
 
 [My Notes](notes.md)
+[https://paintwall.net] (https://paintwall.net)
 
 Paintwall is a public shared canvas with digital paint tools. Users can "log in" by providing a name. Once logged in, they can add their own strokes to the canvas. Each pixel is stored on the backend and is associated with the painter's username, allowing anyone who clicks on that section to view who painted it. 
 
@@ -85,9 +86,9 @@ For this deliverable I did the following. I checked the box `[x]` and added a de
 
 For this deliverable I did the following. I checked the box `[x]` and added a description for things I completed.
 
-- [ ] **Rented EC2 server** - I did not complete this part of the deliverable.
-- [ ] **Leased domain name** - I did not complete this part of the deliverable.
-- [ ] **Server accessible** from my domain: [https://yourdomainnamehere.click](https://yourdomainnamehere.click) - I did not complete this part of the deliverable.
+- [x] **Rented EC2 server** - Used AWS to rent an EC2 server
+- [x] **Leased domain name** - Leased domain name [https://paintwall.net] (https://paintwall.net) for about $16 a year.
+- [x] **Server accessible** from my domain: [https://paintwall.net] (https://paintwall.net) - I attached my domain to my EC2 instance.
 
 ## 🚀 HTML deliverable
 
