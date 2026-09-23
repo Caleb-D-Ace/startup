@@ -17,7 +17,7 @@ Shared digital canvases such as r/place have become massive community events, bu
 
 ### Design
 
-![Design image](images/app_mockup.png)
+![Design image](public/images/app_mockup.png)
 
 This sequence diagram shows how user Caleb can log in and paint a stroke, while user Sarah can view the canvas, which dynamically updates as user Caleb paints.
 
@@ -100,7 +100,7 @@ For this deliverable I did the following. I checked the box `[x]` and added a de
 - [x] **Links** - Nav links between all three pages on every page, plus external links to the GitHub repo and the TheColorAPI third-party service.
 - [x] **Text** - Elevator pitch, feature list, and technology descriptions from the specification are rendered as page content on `about.html`. All other pages contain brief descriptions of how to interact with the website, and player information is simulated at the bottom of `index.html`.
 - [x] **3rd party API placeholder** - `index.html` has a color palette suggestions panel that will be populated from https://www.thecolorapi.com/.
-- [x] **Images** - `about.html` embeds `images/app_mockup.png`; `artists.html` uses `placeholder.png` as avatar placeholders. 
+- [x] **Images** - `about.html` embeds `images/app_mockup.png`; `artists.html` uses `images/placeholder.png` as avatar placeholders. 
 - [x] **Login placeholder** - `index.html` has a login/register form and a logged-in profile panel showing the current username. Upon CSS implementation, the login forms will disappear once the user is logged in.
 - [x] **DB data placeholder** - `artists.html` renders a leaderboard table of top painters that will be populated from stored pixel/user data. The player's level shows next to their username in the header on every page, and `profile.html` has a player statistics section with an XP bar that increases as pixel batches are stored for the wall.
 - [x] **WebSocket placeholder** - `index.html` has a live activity feed and viewer count that will be populated from WebSocket messages. The canvas itself will also update via websocket.
