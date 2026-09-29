@@ -67,3 +67,14 @@ How to deploy:
 - Padding is space inside of an element (between content and border). Padding does not auto-collapse.
 - Margin is space outside an element (between elements and surrounding elements)
 - For a slide-in animation, because window size is variable, you measure things in percentages. (-100% goes to plain 0)
+- Fonts can be downloaded at the top of your css file and then used later. You can pull from external APIs like so: 
+
+`@import url('https://fonts.googleapis.com/css2?family=Rubik Microbe&display=swap');`
+
+- The rounded border edges can be done with `border-radius`.
+- You can make a horizontal, element-spanning line under an element's contents like so:
+`border-bottom: 2px solid #757575ff`
+- When trying to make each element have a specific size, you can use `aspect-ratio: 1` (makes square).
+- To automatically hide elements that overflow, use `overflow: hidden`\
+- With flexbox, you can keep your body filling up the available space with `flex: 1`
+- Keeping elements where they are placed can be done with `position: sticky` or `position: fixed`
