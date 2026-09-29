@@ -60,4 +60,10 @@ How to deploy:
 
 ## React
 
-Interesting things I have learned about React
+- Because you can have the content dynamically react to the window size, orientation, and other constraints, you really need to design AT LEAST three things:
+    1. A desktop layout for your website
+    2. A mobile (vertical) layout for your website
+    3. How the website's content adjusts to an expanding or shrinking menu
+- Padding is space inside of an element (between content and border). Padding does not auto-collapse.
+- Margin is space outside an element (between elements and surrounding elements)
+- For a slide-in animation, because window size is variable, you measure things in percentages. (-100% goes to plain 0)
