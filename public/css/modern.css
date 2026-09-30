@@ -1,0 +1,27 @@
+/* Modern skin: the default token set (applied when the Y2K toggle is unchecked).
+   main.css reads these custom properties for every themeable value; nothing
+   here should be referenced directly from anywhere else. Placeholder values
+   below -- actual look TBD. */
+:root {
+  --color-bg: #ffffff;
+  --color-surface: #f0f0f0;
+  --color-text: #222222;
+  --color-text-muted: #666666;
+  --color-heading: #111111;
+  --color-accent: #3b7ddd;
+  --color-accent-contrast: #ffffff;
+  --color-border: #cccccc;
+
+  --font-body: sans-serif;
+  --font-heading: var(--font-body);
+
+  --radius: 0.25rem;
+  --shadow: none;
+
+  --header-bg-color: var(--color-surface);
+  --header-bg-image: none;
+  --header-text-color: var(--color-heading);
+
+  --canvas-border: 2px dashed var(--color-border);
+  --canvas-bg: #eeeeee;
+}

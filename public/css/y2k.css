@@ -1,0 +1,29 @@
+/* Y2K skin: overrides modern.css's tokens whenever the footer's #theme-toggle
+   checkbox is checked. :has() lets the checkbox live anywhere in the document
+   (the footer) instead of needing to be a preceding sibling of what it themes.
+   When JS/localStorage-driven theming lands later, only the selector below
+   needs to change (to :root[data-theme="y2k"]) -- the token names stay put.
+   Placeholder values below -- actual look TBD. */
+:root:has(#theme-toggle:checked) {
+  --color-bg: #eeeeee;
+  --color-surface: #ffffff;
+  --color-text: #222222;
+  --color-text-muted: #666666;
+  --color-heading: #111111;
+  --color-accent: #999999;
+  --color-accent-contrast: #ffffff;
+  --color-border: #999999;
+
+  --font-body: sans-serif;
+  --font-heading: var(--font-body);
+
+  --radius: 0;
+  --shadow: none;
+
+  --header-bg-color: var(--color-surface);
+  --header-bg-image: url("../images/wildtextures_white-brick-wall.jpg");
+  --header-text-color: #ffffff;
+
+  --canvas-border: 2px dashed var(--color-border);
+  --canvas-bg: #dddddd;
+}
