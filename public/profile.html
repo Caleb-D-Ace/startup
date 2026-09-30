@@ -70,22 +70,30 @@
           painted.
         </canvas>
 
-        <div id="avatar-toolbar">
+        <div id="avatar-toolbar" class="toolbar">
           <h3>Drawing Tools</h3>
 
-          <label for="avatar-color-picker">Brush color</label>
-          <input type="color" id="avatar-color-picker" value="#3b7ddd" />
+          <div class="toolbar-controls">
+            <div class="field">
+              <label for="avatar-brush-style">Brush style</label>
+              <select id="avatar-brush-style" name="avatar-brush-style">
+                <option value="round">Round</option>
+                <option value="square">Square</option>
+                <option value="spray">Spray</option>
+                <option value="calligraphy">Calligraphy</option>
+              </select>
+            </div>
 
-          <label for="avatar-brush-style">Brush style</label>
-          <select id="avatar-brush-style" name="avatar-brush-style">
-            <option value="round">Round</option>
-            <option value="square">Square</option>
-            <option value="spray">Spray</option>
-            <option value="calligraphy">Calligraphy</option>
-          </select>
+            <div class="field">
+              <label for="avatar-color-picker">Brush color</label>
+              <input type="color" id="avatar-color-picker" value="#3b7ddd" />
+            </div>
 
-          <label for="avatar-brush-size">Brush size</label>
-          <input type="range" id="avatar-brush-size" name="avatar-brush-size" min="1" max="50" value="5" />
+            <div class="field">
+              <label for="avatar-brush-size">Brush size</label>
+              <input type="range" id="avatar-brush-size" name="avatar-brush-size" min="1" max="50" value="5" />
+            </div>
+          </div>
 
           <button type="button" id="set-avatar-btn">Set Avatar</button>
         </div>
