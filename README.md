@@ -109,13 +109,13 @@ For this deliverable I did the following. I checked the box `[x]` and added a de
 
 For this deliverable I did the following. I checked the box `[x]` and added a description for things I completed.
 
-- [ ] I completed the prerequisites for this deliverable (Simon deployed, GitHub link, Git commits)
-- [ ] **Visually appealing colors and layout. No overflowing elements.** - I did not complete this part of the deliverable.
-- [ ] **Use of a CSS framework** - I did not complete this part of the deliverable.
-- [ ] **All visual elements styled using CSS** - I did not complete this part of the deliverable.
-- [ ] **Responsive to window resizing using flexbox and/or grid display** - I did not complete this part of the deliverable.
-- [ ] **Use of a imported font** - I did not complete this part of the deliverable.
-- [ ] **Use of different types of selectors including element, class, ID, and pseudo selectors** - I did not complete this part of the deliverable.
+- [x] I completed the prerequisites for this deliverable (Simon deployed, GitHub link, Git commits)
+- [x] **Visually appealing colors and layout. No overflowing elements.** - I did indeed complete this part of the deliverable. My logo mandated a header that wasn't too bright or dark in color, so that defined the look of the app. I will also work on graphics for a Y2k grunge toggle that reskins the website. Everything looks clean.
+- [x] **Use of a CSS framework** - Using bootstrap. I thought about Tailwind, but I figured that Bootstrap would be better for the way the deliverables were structured, and I didn't want to have to return to the CSS if I didn't have to.
+- [x] **All visual elements styled using CSS** - They sure are. I had to experiment a bit to find a color scheme that worked with my current logo. That may change appearance, so I may need to change this again. Sigh. Anyways, it looks much better, and I tried to make a satisfying layout.
+- [x] **Responsive to window resizing using flexbox and/or grid display** - This was a minor headache. I had Claude try implementing much of this; it didn't understand several key things, and I had to go in and change them to fit better myself any time Claude gave it a shot. Interesting limitation there. Anyways, everything should react properly at all sizes.
+- [x] **Use of a imported font** - I chose the simple and clean "Clarity City" Google font.
+- [x] **Use of different types of selectors including element, class, ID, and pseudo selectors** - The element selectors keep the entire website feeling cohesive. Headers, buttons, canvas... All have their own established look. The class selectors can apply to different elements so they have the same rule, useful for my canvas section, activity section, etc. which all use the "panel" class. IDs target the elements individually, allowing canvas to break the standard constraints and fill the screen. The pseudo selector for my hamburger icon allows it to act as a menu even when no javascript exists yet.
 
 ## 🚀 React part 1: Routing deliverable
 
