@@ -67,30 +67,48 @@
           </canvas>
         </div>
 
-        <div id="toolbar">
+        <!-- Mobile-only: reveal the palette/activity panels without scrolling the page -->
+        <div class="mobile-panel-toggles">
+          <input type="checkbox" id="palette-toggle" class="panel-toggle-input" />
+          <label for="palette-toggle" class="panel-toggle-btn">Palette</label>
+          <label for="palette-toggle" class="panel-backdrop"></label>
+
+          <input type="checkbox" id="activity-toggle" class="panel-toggle-input" />
+          <label for="activity-toggle" class="panel-toggle-btn">Activity</label>
+          <label for="activity-toggle" class="panel-backdrop"></label>
+        </div>
+
+        <div id="toolbar" class="toolbar">
           <h3>Drawing Tools</h3>
 
-          <label for="color-picker">Brush color</label>
-          <input type="color" id="color-picker" value="#3b7ddd" />
+          <div class="toolbar-controls">
+            <div id="tool-select" role="group" aria-label="Tool">
+              <button type="button" id="brush-tool-btn" aria-pressed="true">Brush</button>
+              <button type="button" id="hand-tool-btn" aria-pressed="false">Hand</button>
+            </div>
 
-          <label for="brush-style">Brush style</label>
-          <select id="brush-style" name="brush-style">
-            <option value="round">Round</option>
-            <option value="square">Square</option>
-            <option value="spray">Spray</option>
-            <option value="calligraphy">Calligraphy</option>
-          </select>
+            <div class="field toolbar-push">
+              <label for="brush-style">Brush style</label>
+              <select id="brush-style" name="brush-style">
+                <option value="round">Round</option>
+                <option value="square">Square</option>
+                <option value="spray">Spray</option>
+                <option value="calligraphy">Calligraphy</option>
+              </select>
+            </div>
 
-          <label for="brush-size">Brush size</label>
-          <input type="range" id="brush-size" name="brush-size" min="1" max="50" value="5" />
+            <div class="field">
+              <label for="color-picker">Brush color</label>
+              <input type="color" id="color-picker" value="#3b7ddd" />
+            </div>
 
-          <div id="tool-select" role="group" aria-label="Tool">
-            <button type="button" id="brush-tool-btn" aria-pressed="true">Brush</button>
-            <button type="button" id="hand-tool-btn" aria-pressed="false">Hand</button>
+            <div class="field">
+              <label for="brush-size">Brush size</label>
+              <input type="range" id="brush-size" name="brush-size" min="1" max="50" value="5" />
+            </div>
           </div>
-          
 
-          <fieldset>
+          <fieldset id="palette-fieldset">
             <legend>Color palette suggestions</legend>
             <p>
               Complementary colors pulled from the
