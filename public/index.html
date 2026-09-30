@@ -6,14 +6,16 @@
     <meta name="description" content="Paintwall is a public shared canvas where every pixel remembers who drew it. Paint live with others and see it update in real time." />
     <title>Paintwall - The Wall</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous" />
+    <link href="css/modern.css" rel="stylesheet" />
+    <link href="css/main.css" rel="stylesheet" />
   </head>
   <body>
-    <header>
+    <header class="site-header">
       <div id="brand">
-        <h1>Paintwall</h1>
+        <h1 class="brand-logo"><img src="images/paintwall_logo.png" alt="Paintwall" /></h1>
       </div>
 
-      <nav>
+      <nav class="site-nav">
         <ul>
           <li><a href="index.html">The Wall</a></li>
           <li><a href="artists.html">Top Artists</a></li>
@@ -23,13 +25,17 @@
       </nav>
 
       <!-- Authentication placeholder -->
-      <div id="header-auth">
+      <div id="header-auth" class="site-auth">
         <form id="auth-form" action="#" method="post">
-          <label for="username">Username</label>
-          <input type="text" id="username" name="username" placeholder="Username" required />
+          <div class="field">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" placeholder="Username" required />
+          </div>
 
-          <label for="password">Password</label>
-          <input type="password" id="password" name="password" placeholder="Password" />
+          <div class="field">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" placeholder="Password" />
+          </div>
 
           <button type="submit" id="login-btn">Login</button>
         </form>
@@ -48,19 +54,14 @@
 
     <main>
       <!-- Application data placeholder: the live shared canvas -->
-      <section id="canvas-section">
+      <section id="canvas-section" class="panel">
         <h2>The Wall</h2>
         <p>Click any painted pixel to see who painted it and when.</p>
         <p>
           The canvas automatically updates in real-time as you paint on the wall. Select your brush and start painting!
         </p>
-        <div id="canvas-scroll" style="max-width: 100%; height: 600px; overflow: auto;">
-          <canvas
-            id="paintwall-canvas"
-            width="2000"
-            height="2000"
-            style="border: 2px dashed gray; background-color: #e0e0e0;"
-          >
+        <div id="canvas-scroll" class="canvas-scroll">
+          <canvas id="paintwall-canvas" width="2000" height="2000">
             Your browser does not support the canvas element. This is where the shared pixel
             wall will be rendered.
           </canvas>
@@ -108,7 +109,7 @@
       </section>
 
       <!-- WebSocket data placeholder -->
-      <section id="activity-section">
+      <section id="activity-section" class="panel">
         <h2>Live Activity</h2>
         <p><span id="live-user-count">3</span> people are viewing the wall right now.</p>
         <ul id="activity-feed">
@@ -119,11 +120,12 @@
       </section>
     </main>
 
-    <footer>
+    <footer class="site-footer">
       <p>
         Paintwall &mdash; a startup project by Caleb D for CS 260.
         <a href="https://github.com/Caleb-D-Ace/startup" target="_blank" rel="noopener">View source on GitHub</a>
       </p>
+
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>

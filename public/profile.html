@@ -6,14 +6,16 @@
     <meta name="description" content="Paint your own Paintwall avatar and track your painting level and experience." />
     <title>Paintwall - My Avatar</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous" />
+    <link href="css/modern.css" rel="stylesheet" />
+    <link href="css/main.css" rel="stylesheet" />
   </head>
   <body>
-    <header>
+    <header class="site-header">
       <div id="brand">
-        <h1>Paintwall</h1>
+        <h1 class="brand-logo"><img src="images/paintwall_logo.png" alt="Paintwall" /></h1>
       </div>
 
-      <nav>
+      <nav class="site-nav">
         <ul>
           <li><a href="index.html">The Wall</a></li>
           <li><a href="artists.html">Top Artists</a></li>
@@ -23,13 +25,17 @@
       </nav>
 
       <!-- Authentication placeholder -->
-      <div id="header-auth">
+      <div id="header-auth" class="site-auth">
         <form id="auth-form" action="#" method="post">
-          <label for="username">Username</label>
-          <input type="text" id="username" name="username" placeholder="Username" required />
+          <div class="field">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" placeholder="Username" required />
+          </div>
 
-          <label for="password">Password</label>
-          <input type="password" id="password" name="password" placeholder="Password" />
+          <div class="field">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" placeholder="Password" />
+          </div>
 
           <button type="submit" id="login-btn">Login</button>
         </form>
@@ -48,7 +54,7 @@
 
     <main>
       <!-- Application data placeholder: the user's personal avatar canvas -->
-      <section id="avatar-section">
+      <section id="avatar-section" class="panel">
         <h2>My Avatar</h2>
         <p>
           Paint your own 400&times;400 avatar using the same tools as the wall. It is not
@@ -59,12 +65,7 @@
           paint. It stays local to your browser until you click "Set Avatar" below.
         </p>
 
-        <canvas
-          id="avatar-canvas"
-          width="400"
-          height="400"
-          style="border: 2px dashed gray; background-color: #e0e0e0;"
-        >
+        <canvas id="avatar-canvas" width="400" height="400">
           Your browser does not support the canvas element. This is where your avatar will be
           painted.
         </canvas>
@@ -91,7 +92,7 @@
       </section>
 
       <!-- Database data placeholder: XP earned from pixels painted on the wall -->
-      <section id="stats-section">
+      <section id="stats-section" class="panel">
         <h2>Player Statistics</h2>
         <p>
           Every batch of pixels the server receives from you on the wall adds experience.
@@ -102,11 +103,12 @@
       </section>
     </main>
 
-    <footer>
+    <footer class="site-footer">
       <p>
         Paintwall &mdash; a startup project by Caleb D for CS 260.
         <a href="https://github.com/Caleb-D-Ace/startup" target="_blank" rel="noopener">View source on GitHub</a>
       </p>
+
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
