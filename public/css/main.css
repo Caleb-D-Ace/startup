@@ -113,6 +113,7 @@ input[type="range"] {
      instead of jumping between fixed sizes at breakpoints. */
   height: clamp(3rem, 9vw, 7.5rem);
   width: auto;
+  max-width: none;
 }
 
 /* Hamburger menu: holds the login info once the header would otherwise
