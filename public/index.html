@@ -13,6 +13,11 @@
     <header class="site-header">
       <div id="brand">
         <h1 class="brand-logo"><img src="images/paintwall_logo.png" alt="Paintwall" /></h1>
+
+        <input type="checkbox" id="nav-auth-toggle" class="auth-toggle-input" />
+        <label for="nav-auth-toggle" class="hamburger-btn">
+          <img src="images/hamburger_icon.png" alt="Account menu" />
+        </label>
       </div>
 
       <nav class="site-nav">
@@ -67,16 +72,7 @@
           </canvas>
         </div>
 
-        <!-- Mobile-only: reveal the palette/activity panels without scrolling the page -->
-        <div class="mobile-panel-toggles">
-          <input type="checkbox" id="palette-toggle" class="panel-toggle-input" />
-          <label for="palette-toggle" class="panel-toggle-btn">Palette</label>
-          <label for="palette-toggle" class="panel-backdrop"></label>
-
-          <input type="checkbox" id="activity-toggle" class="panel-toggle-input" />
-          <label for="activity-toggle" class="panel-toggle-btn">Activity</label>
-          <label for="activity-toggle" class="panel-backdrop"></label>
-        </div>
+        
 
         <div id="toolbar" class="toolbar">
           <h3>Drawing Tools</h3>
@@ -123,6 +119,17 @@
           </fieldset>
 
           <button type="button" id="save-wall-btn">Save Wall</button>
+        </div>
+
+        <!-- Mobile-only: reveal the palette/activity panels without scrolling the page -->
+        <div class="mobile-panel-toggles">
+          <input type="checkbox" id="palette-toggle" class="panel-toggle-input" />
+          <label for="palette-toggle" class="panel-toggle-btn">Palette</label>
+          <label for="palette-toggle" class="panel-backdrop"></label>
+
+          <input type="checkbox" id="activity-toggle" class="panel-toggle-input" />
+          <label for="activity-toggle" class="panel-toggle-btn">Activity</label>
+          <label for="activity-toggle" class="panel-backdrop"></label>
         </div>
       </section>
 
