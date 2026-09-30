@@ -345,6 +345,16 @@ main {
   height: auto;
 }
 
+/* Stays a 400x400 square, but shrinks to fit narrow viewports instead of
+   overflowing its panel at native size (it has no scroll wrapper like the
+   wall canvas does, so it needs its own responsive sizing). */
+#avatar-canvas {
+  display: block;
+  width: 100%;
+  max-width: 400px;
+  height: auto;
+}
+
 canvas {
   border: var(--canvas-border);
   background-color: var(--canvas-bg);
@@ -378,6 +388,12 @@ canvas {
 }
 
 /* ---- Tables ---- */
+
+/* Scrolls horizontally within its own box on narrow screens instead of
+   the table breaking out of its panel. */
+.table-scroll {
+  overflow-x: auto;
+}
 
 table {
   width: 100%;
@@ -445,6 +461,14 @@ td {
 
   .site-nav {
     padding-left: 0;
+  }
+
+  /* At very narrow widths, four nowrap-text links plus gaps don't fit on
+     one line -- let them wrap onto a second row (already expected here
+     since the whole header is stacked into a column anyway) instead of
+     overflowing off the edge. */
+  .site-nav ul {
+    flex-wrap: wrap;
   }
 
   .site-auth form {
