@@ -1,16 +1,18 @@
-/* Modern skin: the default token set (applied when the Y2K toggle is unchecked).
-   main.css reads these custom properties for every themeable value; nothing
-   here should be referenced directly from anywhere else. Placeholder values
-   below -- actual look TBD. */
+/* Modern skin: the default (and, for now, only) token set. main.css reads
+   these custom properties for every themeable value; nothing here should be
+   referenced directly from anywhere else. Light mode -- fonts still TBD.
+   Palette: Cool Steel (header), Graphite (text), Golden Apricot / Burnt
+   Caramel (accents). */
 :root {
-  --color-bg: #ffffff;
-  --color-surface: #f0f0f0;
-  --color-text: #222222;
-  --color-text-muted: #666666;
-  --color-heading: #111111;
-  --color-accent: #3b7ddd;
-  --color-accent-contrast: #ffffff;
-  --color-border: #cccccc;
+  --color-bg: #e9eaec;
+  --color-surface: #ffffff;
+  --color-text: #3d3b3c;
+  --color-text-muted: #6c7784;
+  --color-heading: #323031;
+  --color-accent: #d8973c;
+  --color-accent-contrast: #323031;
+  --color-link: #bd632f;
+  --color-border: #ccd2d8;
 
   --font-body: sans-serif;
   --font-heading: var(--font-body);
@@ -18,10 +20,10 @@
   --radius: 0.25rem;
   --shadow: none;
 
-  --header-bg-color: var(--color-surface);
+  --header-bg-color: #8798a3;
   --header-bg-image: none;
-  --header-text-color: var(--color-heading);
+  --header-text-color: #323031;
 
-  --canvas-border: 2px dashed var(--color-border);
-  --canvas-bg: #eeeeee;
+  --canvas-border: 2px dashed #c3c8d1;
+  --canvas-bg: #e3e5e9;
 }
