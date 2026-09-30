@@ -6,6 +6,15 @@
   box-sizing: border-box;
 }
 
+/* Content images (no explicit width/height attribute) scale down to fit
+   their container instead of overflowing at native size. Images that DO
+   declare width/height -- like the small leaderboard avatars -- are left
+   alone so they keep their deliberate fixed size. */
+img:not([width]) {
+  max-width: 100%;
+  height: auto;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -67,6 +76,7 @@ input[type="range"] {
 /* ---- Header ---- */
 
 .site-header {
+  position: relative;
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
@@ -86,6 +96,13 @@ input[type="range"] {
   color: var(--header-text-color);
 }
 
+#brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
 .brand-logo {
   align-self: flex-end;
 }
@@ -96,6 +113,22 @@ input[type="range"] {
      instead of jumping between fixed sizes at breakpoints. */
   height: clamp(3rem, 9vw, 7.5rem);
   width: auto;
+}
+
+/* Hamburger menu: holds the login info once the header would otherwise
+   stack it. Hidden entirely above that breakpoint -- .site-auth just
+   renders inline there, same as always. */
+.auth-toggle-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.hamburger-btn {
+  display: none;
 }
 
 .site-nav {
@@ -421,6 +454,57 @@ td {
   #login-btn {
     align-self: stretch;
   }
+
+  /* The fixed 6rem width from the tighter inline tier above doesn't apply
+     here -- there's a whole dropdown's worth of room, so let the fields
+     fill it instead of staying cramped. */
+  .site-auth input[type="text"],
+  .site-auth input[type="password"] {
+    width: 100%;
+  }
+
+  .hamburger-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0.3rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background-color: var(--color-surface);
+    cursor: pointer;
+  }
+
+  .hamburger-btn img {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* The login form/hint/profile-panel -- same #header-auth markup as the
+     wide layout, just hidden by default and dropped down from the
+     hamburger button instead of always taking up space in the stack. */
+  .site-auth {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 1.5rem;
+    z-index: 70;
+    flex-direction: column;
+    align-items: stretch;
+    width: min(20rem, 90vw);
+    margin-top: 0.5rem;
+    padding: 1rem;
+    background-color: var(--header-bg-color);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  }
+
+  body:has(#nav-auth-toggle:checked) .site-auth {
+    display: flex;
+  }
 }
 
 @media (max-width: 40rem) {
@@ -449,6 +533,10 @@ td {
 
   #canvas-section > h2,
   #canvas-section > p {
+    display: none;
+  }
+
+  #toolbar h3 {
     display: none;
   }
 
