@@ -1,8 +1,8 @@
 /* Modern skin: the default (and, for now, only) token set. main.css reads
    these custom properties for every themeable value; nothing here should be
-   referenced directly from anywhere else. Light mode -- fonts still TBD.
-   Palette: Cool Steel (header), Graphite (text), Golden Apricot / Burnt
-   Caramel (accents). */
+   referenced directly from anywhere else. Light mode. Palette: Cool Steel
+   (header), Graphite (text), Golden Apricot / Burnt Caramel (accents). Font:
+   Clarity City (imported via Google Fonts in each page's <head>). */
 :root {
   --color-bg: #e9eaec;
   --color-surface: #ffffff;
@@ -14,7 +14,7 @@
   --color-link: #bd632f;
   --color-border: #ccd2d8;
 
-  --font-body: sans-serif;
+  --font-body: "Clarity City", sans-serif;
   --font-heading: var(--font-body);
 
   --radius: 0.25rem;
