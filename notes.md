@@ -78,3 +78,20 @@ How to deploy:
 - To automatically hide elements that overflow, use `overflow: hidden`\
 - With flexbox, you can keep your body filling up the available space with `flex: 1`
 - Keeping elements where they are placed can be done with `position: sticky` or `position: fixed`
+
+## React 1
+Node.js is a JavaScript interpreter and execution engine. You can use it in the terminal using the `node` command. For instance, to run a line of JavaScript code in the terminal, do `node -e "console.log(1+1)"`
+
+You initialize a directory to use npm with a directory with `npm init -y`, which installs the basic package management files into that directory. 
+
+I've noticed that Chromium browsers tend to have slightly better web debug tools with `f12` than Firefox. That's irritating, but I can test through Chrome instead.
+
+As far as web frameworks go, I know we'll be using React, but I'm rather interested in Vue myself. It's a smaller community-driven project, but I should look into that next time I design a website.
+
+A couple notes:
+- When using React components to style your CSS, use `className` instead of `class`
+- Component names are camel case
+- `react-router-dom` enables us to render one HTML page as if it were multiple, thanks to:
+    - `BrowserRouter` component controls the application and routing action
+    - `NavLink`/`Link` modifies natural behaviors of the `Routes` component, basically redirecting the `to` and `path` attributes to stay on the page and just prompt the switching of the content
+    - Essentially, this creates an `App` component for the router and a `Page` component for a link to direct to.
