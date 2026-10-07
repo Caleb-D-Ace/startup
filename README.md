@@ -126,6 +126,27 @@ For this deliverable I did the following. I checked the box `[x]` and added a de
 - [ ] **Components** - I did not complete this part of the deliverable.
 - [ ] **Router** - I did not complete this part of the deliverable.
 
+#### Canvas/painting design plan (worked out ahead of implementation, saved here so it isn't lost)
+
+The painting system is the last piece of this deliverable to build. Plan before starting:
+
+- **Canvas data model** - A grid of pixels at a **fixed size, decided up front: 1280x720 (720p)**. Each pixel stores a color and a numeric user ID (not a username string) — usernames live once in a DB table, keyed by that ID, so the per-pixel cost is small and fixed regardless of username length. Whoever painted a pixel last owns it (later strokes simply overwrite the pixel's owner).
+- **Username safety** - The risk isn't "code injection" running against the canvas (pixel data is never executed) — it's **XSS**: a malicious username rendered unescaped into the DOM (e.g. an attribution tooltip) could run as HTML/JS. Mitigate with:
+  1. A strict allowlist at registration (alphanumeric + a few safe characters, length-capped) so a bad string is never stored in the first place.
+  2. Always render usernames as plain JSX text (`{username}`), never via `dangerouslySetInnerHTML` — React escapes text content by default.
+- **Keeping the initial canvas payload small at 1280x720 (921,600 pixels)** - the grid itself isn't too large for the server to hold in memory (it's the naive encoding that would be), so the focus is the one-time transfer to each new viewer:
+  1. Use a **fixed, limited color palette** (e.g. ≤256 colors) so each pixel's color is a 1-byte palette index, not a 3-byte RGB value.
+  2. Transfer the grid as **raw binary** (a typed array's buffer, `application/octet-stream` or a binary WS frame), not JSON — encoding numbers as text bloats size 3-5x and costs parse time.
+  3. **Split color and owner-ID into two separate contiguous buffers** instead of interleaving them per-pixel — compression works much better on long runs of the same value, which interleaving breaks up.
+  4. **Enable gzip/Brotli** (HTTP response compression, WS `perMessageDeflate`) - an unpainted region is a long run of one repeated byte, which compresses to almost nothing.
+  5. **Don't ship the owner-ID plane on initial load at all.** Send only the color plane to render the wall; fetch a pixel's owner on-demand via the existing `GET /api/pixel/x/y` endpoint only when a viewer actually clicks to inspect it.
+  6. The full grid is only ever sent **once per session** - all painting after that travels as small incremental stroke diffs over WebSocket (see batching below), so this cost doesn't recur.
+- **Component split** - `wall.jsx` is the *page* (layout + composes the toolbar and canvas, owns the selected tool/color/size state via `useState`). A separate component (e.g. `PaintCanvas.jsx`) owns the `<canvas>` ref and all drawing logic. Tool state is passed down as props from `wall.jsx` — the canvas component doesn't know or care *which* tool is selected, only "paint this shape/size/color at this point."
+- **Brushes** - A brush is a small reusable stamp pattern (Photoshop-style), scalable up/down, applied at a point on drag/click. Since each pixel stores exactly one owner (no alpha blending), brush masks should be **binary** (paint / don't-paint), e.g. a grayscale brush image thresholded at ~50% opacity, rather than alpha-composited — this keeps pixel ownership unambiguous. Scaling a brush is just resizing that small mask bitmap (nearest-neighbor keeps a pixel-art look; try bilinear too for softer edges).
+- **Stroke batching over WebSocket** - Don't send an update every frame. Buffer painted points client-side into a "stroke," and flush to the server on **whichever comes first**: every `n * size_modifier` points, or a ~100ms timer (so a slow/still drag isn't stranded waiting for a point count that never arrives) — plus always flush on pointer-up/leave/cancel so the tail of a stroke is never lost.
+- **Server is the source of truth for rasterization** - The server resolves a submitted stroke into the actual list of affected pixels (`x, y, color, username`) and broadcasts *that* list to other clients (matches the existing `stroke:commit` step in the sequence diagram above) — clients never need to reimplement brush rasterization themselves to stay in sync.
+- **Local responsiveness (later, not blocking)** - The painting user's own cursor/stroke should render immediately client-side (optimistic), independent of the batching/flush timer to the server — otherwise painting will feel laggy while waiting on round trips.
+
 ## 🚀 React part 2: Reactivity deliverable
 
 For this deliverable I did the following. I checked the box `[x]` and added a description for things I completed.
