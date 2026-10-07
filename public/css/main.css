@@ -107,6 +107,10 @@ input[type="range"] {
   align-self: flex-end;
 }
 
+.brand-logo a {
+  display: block;
+}
+
 .brand-logo img {
   display: block;
   /* 7.5rem is the max (current) size; shrinks fluidly down to 3rem on phones
@@ -533,6 +537,20 @@ td {
 }
 
 @media (max-width: 40rem) {
+  /* Tighter header so all four nav links stay on one row down to ~320px. */
+  .site-header {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .site-nav a {
+    font-size: 0.9rem;
+  }
+
+  .site-nav ul {
+    gap: 0.6rem;
+  }
+
   /* ---- Wall page (index.html): compact painting workspace ----
      Toolbar sits after a canvas that's given a solid height floor (not just
      "whatever's left"), so it can't get crushed to nothing under a tall
@@ -623,7 +641,7 @@ td {
     min-width: 0;
     overflow-y: auto;
     background-color: var(--color-surface);
-    box-shadow: -6px 0 16px rgba(0, 0, 0, 0.35);
+    box-shadow: none;
     transform: translateX(100%);
     transition: transform 0.2s ease;
   }
@@ -631,6 +649,7 @@ td {
   body:has(#palette-toggle:checked) #palette-fieldset,
   body:has(#activity-toggle:checked) #activity-section {
     transform: translateX(0);
+    box-shadow: -6px 0 16px rgba(0, 0, 0, 0.35);
   }
 
   .panel-backdrop {
