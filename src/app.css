@@ -62,11 +62,6 @@ button:hover {
   border-color: var(--color-accent);
 }
 
-input[type="color"] {
-  padding: 0.2rem;
-  height: 2.25rem;
-}
-
 input[type="range"] {
   padding: 0;
   border: none;
@@ -310,6 +305,30 @@ main {
   background-color: var(--color-accent);
   color: var(--color-accent-contrast);
   border-color: var(--color-accent);
+}
+
+/* Fixed-palette brush color swatches -- replaces a free-form <input
+   type="color">, since painted pixels store a palette index rather than an
+   arbitrary RGB value. Reuses the same aria-pressed selected-state pattern
+   as #tool-select above. */
+.color-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  max-width: 11rem;
+}
+
+.swatch {
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.swatch[aria-pressed="true"] {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-accent);
 }
 
 .toolbar fieldset {

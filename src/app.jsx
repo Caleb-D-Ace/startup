@@ -107,7 +107,7 @@ export default function App() {
     <footer className="site-footer">
       <p>
         Paintwall &mdash; a startup project by Caleb D for CS 260.
-        <a href="https://github.com/Caleb-D-Ace/startup" target="_blank" rel="noopener">View source on GitHub</a>
+        <a href="https://github.com/Caleb-D-Ace/startup" target="_blank" rel="noopener"> View source on GitHub</a>
       </p>
 
     </footer>
