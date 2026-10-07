@@ -94,7 +94,6 @@ input[type="range"] {
 #brand {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 0.75rem;
 }
 
@@ -108,16 +107,18 @@ input[type="range"] {
 
 .brand-logo img {
   display: block;
-  /* 7.5rem is the max (current) size; shrinks fluidly down to 3rem on phones
+  /* 5.5rem is the max (current) size -- shrunk down from 7.5rem to trim the
+     header's overall height -- shrinking fluidly down to 2.5rem on phones
      instead of jumping between fixed sizes at breakpoints. */
-  height: clamp(3rem, 9vw, 7.5rem);
+  height: clamp(2.5rem, 7vw, 5.5rem);
   width: auto;
   max-width: none;
 }
 
-/* Hamburger menu: holds the login info once the header would otherwise
-   stack it. Hidden entirely above that breakpoint -- .site-auth just
-   renders inline there, same as always. */
+/* Hamburger menu: only appears once the header no longer has room for the
+   login fields inline (see the 56rem tier below) -- it opens a dropdown
+   holding login/account info and, at that same width, "About" too (About
+   lives in the main nav instead while there's room for it there). */
 .auth-toggle-input {
   position: absolute;
   width: 1px;
@@ -129,6 +130,27 @@ input[type="range"] {
 
 .hamburger-btn {
   display: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0.3rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+/* Same hover/focus treatment as the nav links -- no border, no background
+   until hovered/focused. */
+.hamburger-btn:hover,
+.hamburger-btn:focus-visible {
+  background-color: var(--header-hover-bg);
+}
+
+.hamburger-btn img {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .site-nav {
@@ -138,6 +160,10 @@ input[type="range"] {
 
 .site-nav ul {
   display: flex;
+  /* Wraps onto a second row whenever it genuinely doesn't fit (e.g. just
+     above the 56rem tier, where nav+login are both still inline and can
+     otherwise overflow the header) -- stays on one line whenever there's
+     room, at any width. */
   flex-wrap: nowrap;
   gap: 1rem;
   list-style: none;
@@ -146,14 +172,36 @@ input[type="range"] {
 }
 
 .site-nav a {
+  display: inline-block;
   font-family: var(--font-body);
   font-weight: 700;
   font-size: 1.15rem;
   text-decoration: none;
   white-space: nowrap;
   color: var(--header-text-color);
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--radius);
+  transition: background-color 0.15s ease;
 }
 
+/* Looks like plain text until hovered/focused -- the hit area is still the
+   whole padded box, it just has no visible background until then. */
+.site-nav a:hover,
+.site-nav a:focus-visible {
+  background-color: var(--header-hover-bg);
+}
+
+/* Short nav labels, swapped in below the 40rem phone tier (see that media
+   query) so each link takes less width -- nav now shares the header row
+   with the logo at every width instead of getting a row to itself, so it
+   has less room to work with on narrow phones. */
+.nav-label-short {
+  display: none;
+}
+
+/* Login/account info -- renders inline in the header while there's room
+   (see .hamburger-btn above); the 56rem tier below turns this into a
+   dropdown instead, hidden until the hamburger opens it. */
 .site-auth {
   display: flex;
   flex-wrap: wrap;
@@ -178,10 +226,26 @@ input[type="range"] {
   width: 8rem;
 }
 
-#register-hint {
-  flex-basis: 100%;
-  margin: 0;
-  text-align: right;
+/* "About" link inside the dropdown -- only shown at the narrow tier, where
+   About is pulled out of the main nav and dropped in here instead (see
+   .nav-about-wide and the 56rem tier below). */
+.about-link {
+  display: none;
+  margin-top: 0.25rem;
+  padding: 0.5rem 0.6rem 0.4rem;
+  border-top: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  text-align: center;
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--header-text-color);
+  transition: background-color 0.15s ease;
+}
+
+/* Same hover/focus highlight as the nav links and the hamburger button. */
+.about-link:hover,
+.about-link:focus-visible {
+  background-color: var(--header-hover-bg);
 }
 
 .field {
@@ -190,11 +254,84 @@ input[type="range"] {
   gap: 0.25rem;
 }
 
+/* "New here?" hint -- used to sit in the header as its own line; now lives
+   as a hover/focus tooltip off the username field instead, so it never
+   takes up header space at any width. CSS-only, same as the rest of this
+   project's interactive bits. */
+.field-tooltip-wrap {
+  position: relative;
+}
+
+.field-tooltip {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 80;
+  margin: 0.4rem 0 0;
+  width: max(14rem, 100%);
+  padding: 0.5rem 0.75rem;
+  background-color: var(--header-bg-color);
+  color: var(--header-text-color);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  font-size: 0.85rem;
+  line-height: 1.3;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-0.25rem);
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+  pointer-events: none;
+}
+
+.field-tooltip-wrap:hover .field-tooltip,
+.field-tooltip-wrap:focus-within .field-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
 #profile-panel {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.75rem;
+}
+
+/* "Welcome, <username> (Level 3)" -- forced onto one line so a long
+   username can't push "(Level 3)" onto its own line and grow the header's
+   height. The username itself truncates with an ellipsis instead; the
+   "Welcome," prefix and "(Level 3)" suffix stay put either way. */
+.profile-greeting {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  white-space: nowrap;
+}
+
+#current-username {
+  display: inline-block;
+  max-width: 9rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
+/* Profile page's stats panel: username and XP bar sit side by side instead
+   of stacked -- the "every batch..." explanation moves into a hover/focus
+   tooltip off the XP bar (reuses .field-tooltip-wrap/.field-tooltip) rather
+   than always-visible text. */
+.stats-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.stats-header h2 {
+  margin: 0;
 }
 
 /* ---- Theme switcher (in the footer) ---- */
@@ -255,6 +392,7 @@ main {
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 1.5rem;
+  color: var(--color-text);
 }
 
 /* The wall's canvas panel breaks out of main's 60rem column and spans the
@@ -264,6 +402,36 @@ main {
   max-width: 100vw;
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
+}
+
+/* About page: pitch section on the left, Key Features and Technologies
+   stacked on the right instead of all three stacking in one column -- less
+   scrolling to see everything. Keyed off orientation rather than a width
+   breakpoint -- landscape (phone or desktop alike) gets the wider 2-column
+   layout, portrait always gets the single-column mobile-style stack, no
+   matter how wide that portrait viewport happens to be. Scoped to about.jsx
+   via :has(), same pattern as the Wall page's mobile layout further down. */
+@media (orientation: landscape) {
+  main:has(#pitch-section) {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    max-width: 75rem; /* wider than the normal 60rem column so each side has more room */
+  }
+
+  #pitch-section {
+    grid-column: 1;
+    grid-row: 1 / 3;
+  }
+
+  #features-section {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  #tech-section {
+    grid-column: 2;
+    grid-row: 2;
+  }
 }
 
 /* ---- Drawing toolbars (index.html and profile.html) ---- */
@@ -376,6 +544,7 @@ main {
   width: 100%;
   max-width: 400px;
   height: auto;
+  margin: 0 auto;
 }
 
 canvas {
@@ -444,16 +613,13 @@ td {
 }
 
 /* ---- Small screens ----
-   Three-tier header degradation as the viewport narrows:
-   1. Wide:  logo + nav + login fields all inline, "New here?" hint visible.
-   2. Medium: hint disappears first to free up room -- fields stay inline.
-   3. Narrow: header stacks into rows, and username/password stack too. */
+   Two-tier header degradation as the viewport narrows:
+   1. Wide/medium: logo + nav (incl. About) + login fields all inline.
+   2. Narrow: login fields and About collapse into the hamburger dropdown,
+      and About disappears from the nav -- they trade places at the same
+      breakpoint so neither shows twice or not at all. */
 
-@media (max-width: 64rem) {
-  #register-hint {
-    display: none;
-  }
-
+@media (max-width: 74rem) {
   .site-header {
     gap: 0.5rem;
   }
@@ -476,22 +642,15 @@ td {
   }
 }
 
-@media (max-width: 56rem) {
-  .site-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
+@media (max-width: 60rem) {
   .site-nav {
     padding-left: 0;
   }
 
-  /* At very narrow widths, four nowrap-text links plus gaps don't fit on
-     one line -- let them wrap onto a second row (already expected here
-     since the whole header is stacked into a column anyway) instead of
-     overflowing off the edge. */
-  .site-nav ul {
-    flex-wrap: wrap;
+  /* About moves into the hamburger dropdown below -- no room to keep it
+     inline in the nav at this tier. */
+  .nav-about-wide {
+    display: none;
   }
 
   .site-auth form {
@@ -513,26 +672,11 @@ td {
 
   .hamburger-btn {
     display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.5rem;
-    height: 2.5rem;
-    padding: 0.3rem;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius);
-    background-color: var(--color-surface);
-    cursor: pointer;
   }
 
-  .hamburger-btn img {
-    display: block;
-    width: 100%;
-    height: 100%;
-  }
-
-  /* The login form/hint/profile-panel -- same #header-auth markup as the
-     wide layout, just hidden by default and dropped down from the
-     hamburger button instead of always taking up space in the stack. */
+  /* The login form/profile-panel -- same #header-auth markup as the wide
+     layout, just hidden by default and dropped down from the hamburger
+     button instead of always taking up space in the header. */
   .site-auth {
     display: none;
     position: absolute;
@@ -544,6 +688,7 @@ td {
     width: min(20rem, 90vw);
     margin-top: 0.5rem;
     padding: 1rem;
+    gap: 0.75rem;
     background-color: var(--header-bg-color);
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
@@ -553,10 +698,18 @@ td {
   body:has(#nav-auth-toggle:checked) .site-auth {
     display: flex;
   }
+
+  /* About reappears here, inside the dropdown, since it just disappeared
+     from the nav above. */
+  .about-link {
+    display: block;
+  }
 }
 
 @media (max-width: 40rem) {
-  /* Tighter header so all four nav links stay on one row down to ~320px. */
+  /* Tighter header, plus shorter nav labels (below) -- keeps all four nav
+     links fitting in less width down to ~320px, now that nav shares the
+     header row with the logo instead of getting a row to itself. */
   .site-header {
     padding-left: 1rem;
     padding-right: 1rem;
@@ -564,6 +717,14 @@ td {
 
   .site-nav a {
     font-size: 0.9rem;
+  }
+
+  .nav-label-full {
+    display: none;
+  }
+
+  .nav-label-short {
+    display: inline;
   }
 
   .site-nav ul {

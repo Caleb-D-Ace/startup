@@ -1,6 +1,61 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './app.css';
+import { BrowserRouter, NavLink, Route, Routes } from 'react-router-dom';
+import { AuthProvider, useAuth } from './AuthContext';
+import {Wall} from './wall/wall'
+import {Artists} from './artists/artists'
+import {Profile} from './profile/profile'
+import {About} from './about/about'
+
+export default function App() {
+    return (
+        <BrowserRouter>
+          <AuthProvider>
+            <div className="body bg-dark text-light">
+                <header className="site-header">
+                <div id="brand">
+                    <h1 className="brand-logo"><NavLink to="/"><img src="images/paintwall_logo.png" alt="Paintwall home" /></NavLink></h1>
+                </div>
+
+                <nav className="site-nav">
+                    <ul>
+                    <li><NavLink to="/"><span className="nav-label-full">The Wall</span><span className="nav-label-short">Wall</span></NavLink></li>
+                    <li><NavLink to="/artists"><span className="nav-label-full">Top Artists</span><span className="nav-label-short">Artists</span></NavLink></li>
+                    <li><NavLink to="/profile"><span className="nav-label-full">My Avatar</span><span className="nav-label-short">Avatar</span></NavLink></li>
+                    <li className="nav-about-wide"><NavLink to="/about">About</NavLink></li>
+                    </ul>
+                </nav>
+
+                <input type="checkbox" id="nav-auth-toggle" className="auth-toggle-input" />
+                <label htmlFor="nav-auth-toggle" className="hamburger-btn">
+                <img src="images/hamburger_icon.png" alt="Account menu" />
+                </label>
+
+                <AuthPanel />
+                </header>
+
+                <main>
+                    <Routes>
+                        <Route path="/" element={<Wall />} />
+                        <Route path="/artists" element={<Artists />} />
+                        <Route path="/profile" element={<Profile />} />
+                        <Route path="/about" element={<About />} />
+                    </Routes>
+                </main>
+
+                <footer className="site-footer">
+                <p>
+                    Paintwall &mdash; a startup project by Caleb D for CS 260.
+                    <a href="https://github.com/Caleb-D-Ace/startup" target="_blank" rel="noopener"> View source on GitHub</a>
+                </p>
+
+                </footer>
+            </div>
+          </AuthProvider>
+        </BrowserRouter>
+    );
+}
 
 // Replaces public/js/auth.js's imperative DOM manipulation (getElementById +
 // toggling .hidden) with React state. That old script and React both tried
@@ -9,43 +64,35 @@ import './app.css';
 // not just a port: login state now lives in React, so there's nothing left
 // for a separate script to fight over.
 function AuthPanel() {
-  const [loggedInAs, setLoggedInAs] = useState(null);
-  const [username, setUsername] = useState('');
-
-  useEffect(() => {
-    const saved = localStorage.getItem('paintwall-username');
-    if (saved) {
-      setLoggedInAs(saved);
-    }
-  }, []);
+  const { username: loggedInAs, login, logout } = useAuth();
+  const [usernameInput, setUsernameInput] = useState('');
 
   function handleSubmit(event) {
     event.preventDefault();
-    const trimmed = username.trim();
+    const trimmed = usernameInput.trim();
     if (!trimmed) {
       return;
     }
-    localStorage.setItem('paintwall-username', trimmed);
-    setLoggedInAs(trimmed);
-    setUsername('');
+    login(trimmed);
+    setUsernameInput('');
   }
 
   function handleLogout() {
-    localStorage.removeItem('paintwall-username');
-    setLoggedInAs(null);
+    logout();
   }
 
   if (loggedInAs) {
     return (
       <div id="header-auth" className="site-auth">
         <div id="profile-panel">
-          <span>
+          <span className="profile-greeting">
             Welcome, <span id="current-username">{loggedInAs}</span>{' '}
             <span id="user-level">(Level 3)</span>
           </span>
           <meter id="header-xp-bar" min="0" max="1000" value="420" aria-label="Experience toward next level"></meter>
           <button type="button" id="logout-btn" onClick={handleLogout}>Logout</button>
         </div>
+        <NavLink to="/about" className="about-link">About</NavLink>
       </div>
     );
   }
@@ -53,7 +100,7 @@ function AuthPanel() {
   return (
     <div id="header-auth" className="site-auth">
       <form id="auth-form" onSubmit={handleSubmit}>
-        <div className="field">
+        <div className="field field-tooltip-wrap">
           <label htmlFor="username">Username</label>
           <input
             type="text"
@@ -61,9 +108,12 @@ function AuthPanel() {
             name="username"
             placeholder="Username"
             required
-            value={username}
-            onChange={(event) => setUsername(event.target.value)}
+            value={usernameInput}
+            onChange={(event) => setUsernameInput(event.target.value)}
           />
+          <p className="field-tooltip" role="tooltip">
+            New here? Just enter a username and click Login to create an account.
+          </p>
         </div>
 
         <div className="field">
@@ -73,43 +123,8 @@ function AuthPanel() {
 
         <button type="submit" id="login-btn">Login</button>
       </form>
-      <p id="register-hint">New here? Just enter a username and click Login to create an account.</p>
+      <NavLink to="/about" className="about-link">About</NavLink>
     </div>
   );
 }
 
-export default function App() {
-  return (<div className="body bg-dark text-light">
-    <header className="site-header">
-      <div id="brand">
-        <h1 className="brand-logo"><a href="wall.html"><img src="images/paintwall_logo.png" alt="Paintwall home" /></a></h1>
-
-        <input type="checkbox" id="nav-auth-toggle" className="auth-toggle-input" />
-        <label htmlFor="nav-auth-toggle" className="hamburger-btn">
-          <img src="images/hamburger_icon.png" alt="Account menu" />
-        </label>
-      </div>
-
-      <nav className="site-nav">
-        <ul>
-          <li><a href="wall.html">The Wall</a></li>
-          <li><a href="artists.html">Top Artists</a></li>
-          <li><a href="profile.html">My Avatar</a></li>
-          <li><a href="about.html">About</a></li>
-        </ul>
-      </nav>
-
-      <AuthPanel />
-    </header>
-
-    <main>App components go here</main>
-
-    <footer className="site-footer">
-      <p>
-        Paintwall &mdash; a startup project by Caleb D for CS 260.
-        <a href="https://github.com/Caleb-D-Ace/startup" target="_blank" rel="noopener"> View source on GitHub</a>
-      </p>
-
-    </footer>
-  </div>);
-}

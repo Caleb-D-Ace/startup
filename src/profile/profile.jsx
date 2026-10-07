@@ -1,8 +1,32 @@
 import React from 'react';
+import { useAuth } from '../AuthContext';
 
 export function Profile() {
+  const { username } = useAuth();
+
   return (
-    <main>
+    <>
+      {/* Database data placeholder: XP earned from pixels painted on the wall */}
+      <section id="stats-section" className="panel">
+        {username ? (
+          <>
+            <div className="stats-header">
+              <h2 id="stats-username">{username}</h2>
+              <div className="field-tooltip-wrap">
+                <progress id="xp-bar" value="420" max="1000" tabIndex={0}>42%</progress>
+                <p className="field-tooltip" role="tooltip">
+                  Every batch of pixels the server receives from you on the wall adds experience.
+                  Level up the more you paint!
+                </p>
+              </div>
+            </div>
+            <p><span id="xp-label">420 / 1000 XP</span> to Level 4</p>
+          </>
+        ) : (
+          <p>Log in to see stats and create avatar</p>
+        )}
+      </section>
+
       {/* Application data placeholder: the user's personal avatar canvas */}
       <section id="avatar-section" className="panel">
         <h2>My Avatar</h2>
@@ -48,17 +72,6 @@ export function Profile() {
           <button type="button" id="set-avatar-btn">Set Avatar</button>
         </div>
       </section>
-
-      {/* Database data placeholder: XP earned from pixels painted on the wall */}
-      <section id="stats-section" className="panel">
-        <h2>Player Statistics</h2>
-        <p>
-          Every batch of pixels the server receives from you on the wall adds experience.
-          Level up the more you paint!
-        </p>
-        <progress id="xp-bar" value="420" max="1000">42%</progress>
-        <p><span id="xp-label">420 / 1000 XP</span> to Level 4</p>
-      </section>
-    </main>
+    </>
   );
 }

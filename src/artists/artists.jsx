@@ -2,7 +2,7 @@ import React from 'react';
 
 export function Artists() {
   return (
-    <main>
+    <>
       {/* Database data placeholder */}
       <section id="leaderboard-section" className="panel">
         <h2>Top Artists</h2>
@@ -45,6 +45,6 @@ export function Artists() {
           </table>
         </div>
       </section>
-    </main>
+    </>
   );
 }

@@ -2,7 +2,7 @@ import React from 'react';
 
 export function About() {
   return (
-    <main>
+    <>
       <section id="pitch-section" className="panel">
         <h2>Co-op Graffiti Canvas</h2>
         <p>
@@ -53,7 +53,6 @@ export function About() {
           <dd>Streams live strokes and viewer counts to every connected browser.</dd>
         </dl>
       </section>
-    </main>
-
+    </>
   );
 }

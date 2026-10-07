@@ -2,7 +2,7 @@ import React from 'react';
 
 export function Wall() {
   return (
-    <main>
+    <>
       {/* Application data placeholder: the live shared canvas */}
       <section id="canvas-section" className="panel">
         <h2>The Wall</h2>
@@ -88,6 +88,6 @@ export function Wall() {
           <li>anon_guest joined the wall</li>
         </ul>
       </section>
-    </main>
+    </>
   );
 }
