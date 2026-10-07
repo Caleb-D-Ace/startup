@@ -126,6 +126,8 @@ For this deliverable I did the following. I checked the box `[x]` and added a de
 - [x] **Components** - NavLink components are replacing the `<a>` components in navbar, className used instead of class, html is moved to .jsx elements
 - [x] **Router** - Everything routes to .jsx files
 
+Additionally updated many of the CSS to be better reactive.
+
 #### Canvas/painting design plan (worked out ahead of implementation, saved here so it isn't lost)
 
 The painting system is the last piece of this deliverable to build. Plan before starting:
