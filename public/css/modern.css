@@ -23,6 +23,7 @@
   --header-bg-color: #8798a3;
   --header-bg-image: none;
   --header-text-color: #323031;
+  --header-hover-bg: rgba(255, 255, 255, 0.2);
 
   --canvas-border: 2px dashed #c3c8d1;
   --canvas-bg: #e3e5e9;
