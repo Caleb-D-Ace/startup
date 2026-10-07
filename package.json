@@ -1,0 +1,31 @@
+{
+  "name": "startup",
+  "version": "1.0.0",
+  "description": "[My Notes](notes.md) [https://paintwall.net] (https://paintwall.net)",
+  "main": "index.js",
+  "devDependencies": {
+    "vite": "^8.3.3"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Caleb-D-Ace/startup.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Caleb-D-Ace/startup/issues"
+  },
+  "homepage": "https://github.com/Caleb-D-Ace/startup#readme",
+  "dependencies": {
+    "bootstrap": "^5.3.8",
+    "react-bootstrap": "^2.10.10"
+  }
+}
