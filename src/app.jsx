@@ -31,6 +31,7 @@ export default function App() {
                 <label htmlFor="nav-auth-toggle" className="hamburger-btn">
                 <img src="images/hamburger_icon.png" alt="Account menu" />
                 </label>
+                <label htmlFor="nav-auth-toggle" className="auth-backdrop" aria-hidden="true"></label>
 
                 <AuthPanel />
                 </header>

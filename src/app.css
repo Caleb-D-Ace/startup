@@ -153,6 +153,14 @@ input[type="range"] {
   height: 100%;
 }
 
+/* Invisible full-viewport click-catcher behind the dropdown -- tied to the
+   same checkbox, so clicking anywhere outside the dropdown closes it the
+   same way clicking the hamburger does. Sits below .site-auth's z-index so
+   clicks on the dropdown itself still reach its own content. */
+.auth-backdrop {
+  display: none;
+}
+
 .site-nav {
   flex: 1 1 auto;
   padding-left: 1rem;
@@ -697,6 +705,18 @@ td {
 
   body:has(#nav-auth-toggle:checked) .site-auth {
     display: flex;
+  }
+
+  .auth-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 65;
+    background: transparent;
+  }
+
+  body:has(#nav-auth-toggle:checked) .auth-backdrop {
+    display: block;
   }
 
   /* About reappears here, inside the dropdown, since it just disappeared
