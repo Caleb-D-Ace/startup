@@ -3,14 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Paint your own Paintwall avatar and track your painting level and experience." />
-    <title>Paintwall - My Avatar</title>
+    <meta name="description" content="Learn what Paintwall is, its key features, and the technologies powering this real-time collaborative graffiti wall." />
+    <title>Paintwall - About</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Clarity+City:wght@400;600;700&display=swap" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous" />
     <link href="css/modern.css" rel="stylesheet" />
-    <link href="css/main.css" rel="stylesheet" />
+    <link href="src/app.css" rel="stylesheet" />
   </head>
   <body>
     <header class="site-header">
@@ -61,61 +61,55 @@
     </header>
 
     <main>
-      <!-- Application data placeholder: the user's personal avatar canvas -->
-      <section id="avatar-section" class="panel">
-        <h2>My Avatar</h2>
+      <section id="pitch-section" class="panel">
+        <h2>Co-op Graffiti Canvas</h2>
         <p>
-          Paint your own 400&times;400 avatar using the same tools as the wall. It is not
-          associated with pixel ownership, so it stays small and simple to store.
+          Shared digital canvases such as r/place have become massive community events, but they
+          are time-limited by nature. What if there was a public canvas that simply&hellip;
+          stayed? Paintwall is a public digital graffiti wall where every pixel remembers who drew
+          it. Featuring digital paint tools, a real-time shared canvas, and individual attribution
+          for every drawing, Paintwall is a fun and creative application that showcases the power
+          of WebSocket and individual artists.
         </p>
-        <p>
-          Unlike the wall, your avatar is <strong>not</strong> sent to the server as you
-          paint. It stays local to your browser until you click "Set Avatar" below.
-        </p>
 
-        <canvas id="avatar-canvas" width="400" height="400">
-          Your browser does not support the canvas element. This is where your avatar will be
-          painted.
-        </canvas>
-
-        <div id="avatar-toolbar" class="toolbar">
-          <h3>Drawing Tools</h3>
-
-          <div class="toolbar-controls">
-            <div class="field">
-              <label for="avatar-brush-style">Brush style</label>
-              <select id="avatar-brush-style" name="avatar-brush-style">
-                <option value="round">Round</option>
-                <option value="square">Square</option>
-                <option value="spray">Spray</option>
-                <option value="calligraphy">Calligraphy</option>
-              </select>
-            </div>
-
-            <div class="field">
-              <label for="avatar-color-picker">Brush color</label>
-              <input type="color" id="avatar-color-picker" value="#3b7ddd" />
-            </div>
-
-            <div class="field">
-              <label for="avatar-brush-size">Brush size</label>
-              <input type="range" id="avatar-brush-size" name="avatar-brush-size" min="1" max="50" value="5" />
-            </div>
-          </div>
-
-          <button type="button" id="set-avatar-btn">Set Avatar</button>
-        </div>
+        <figure>
+          <img src="images/app_mockup.png" alt="Sequence diagram and mockup of the Paintwall application" />
+          <figcaption>An early design mockup of the Paintwall canvas and login flow.</figcaption>
+        </figure>
       </section>
 
-      <!-- Database data placeholder: XP earned from pixels painted on the wall -->
-      <section id="stats-section" class="panel">
-        <h2>Player Statistics</h2>
-        <p>
-          Every batch of pixels the server receives from you on the wall adds experience.
-          Level up the more you paint!
-        </p>
-        <progress id="xp-bar" value="420" max="1000">42%</progress>
-        <p><span id="xp-label">420 / 1000 XP</span> to Level 4</p>
+      <section id="features-section" class="panel">
+        <h2>Key Features</h2>
+        <ul>
+          <li>Real-time collaborative canvas &mdash; watch other users' strokes appear live as they paint, with no refresh needed</li>
+          <li>Full attribution &mdash; click any painted pixel to see exactly who drew it and when</li>
+          <li>Zero-friction identity &mdash; jump in with just a username; add a password only if you want to protect it from being used by others</li>
+          <li>Color palette suggestions &mdash; pull complementary color schemes from a third-party color API while you paint</li>
+          <li>Permanent canvas &mdash; unlike time-limited events, the wall persists between sessions instead of resetting</li>
+        </ul>
+      </section>
+
+      <section id="tech-section" class="panel">
+        <h2>Technologies</h2>
+        <dl>
+          <dt>HTML</dt>
+          <dd>Semantic page structure for the wall, login, and leaderboard views.</dd>
+
+          <dt>CSS</dt>
+          <dd>Styling for the drawing tools and a responsive layout for mobile and desktop.</dd>
+
+          <dt>React</dt>
+          <dd>Component-based views that route between logged-out and logged-in states without a page reload.</dd>
+
+          <dt>Service</dt>
+          <dd>A backend with endpoints for login/register, canvas state, pixel ownership, and color suggestions.</dd>
+
+          <dt>DB</dt>
+          <dd>Stores pixel ownership, user accounts, and session tokens.</dd>
+
+          <dt>WebSocket</dt>
+          <dd>Streams live strokes and viewer counts to every connected browser.</dd>
+        </dl>
       </section>
     </main>
 
