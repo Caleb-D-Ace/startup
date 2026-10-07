@@ -1,3 +1,4 @@
 deployFiles.sh
 demovite/
 node_modules/
+dist/
