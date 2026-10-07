@@ -121,10 +121,10 @@ For this deliverable I did the following. I checked the box `[x]` and added a de
 
 For this deliverable I did the following. I checked the box `[x]` and added a description for things I completed.
 
-- [ ] I completed the prerequisites for this deliverable (Simon deployed, GitHub link, Git commits)
-- [ ] **Bundled using Vite** - I did not complete this part of the deliverable.
-- [ ] **Components** - I did not complete this part of the deliverable.
-- [ ] **Router** - I did not complete this part of the deliverable.
+- [x] I completed the prerequisites for this deliverable (Simon deployed, GitHub link, Git commits)
+- [x] **Bundled using Vite** - Vite is included, package.json scripts updated
+- [x] **Components** - NavLink components are replacing the `<a>` components in navbar, className used instead of class, html is moved to .jsx elements
+- [x] **Router** - Everything routes to .jsx files
 
 #### Canvas/painting design plan (worked out ahead of implementation, saved here so it isn't lost)
 
