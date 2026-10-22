@@ -170,6 +170,15 @@ For this deliverable I did the following. I checked the box `[x]` and added a de
 - [ ] **Supports registration, login, logout, and restricted endpoint** - I did not complete this part of the deliverable.
 - [ ] **Uses BCrypt to hash passwords** - I did not complete this part of the deliverable.
 
+#### Tentative API plan (brainstormed ahead of implementation, saved here so it isn't lost)
+
+Beyond the basics already listed in the Technologies section (register/login/logout, canvas state, pixel ownership lookup, color suggestions), a few more API groups worth building:
+
+- **Canvas API** - `GET /api/canvas` (current state), `POST /api/canvas/stroke` (submit a batched stroke; server rasterizes it, resolves the affected pixels, and is what triggers the WebSocket broadcast), `GET /api/canvas/pixel/:x/:y` (ownership lookup). Stretch idea: `GET /api/canvas/replay` - the ordered history of committed strokes, so the frontend could animate a timelapse of how the wall got painted.
+- **Palette/quantization API** - since painted pixels store a palette index rather than an arbitrary RGB value, the color-matching math belongs on the server, not duplicated in the browser: `GET /api/palette` (serves the canonical 32-color list, one source of truth instead of being duplicated in the client bundle) and `GET /api/palette/suggestions?base=<hex>` (calls TheColorAPI for a scheme *and* quantizes every result to the nearest palette entry before returning it, in one round trip - the frontend never touches raw color math or an un-paintable hex).
+- **Avatar API** - `POST /api/avatar` (save a finished avatar) / `GET /api/avatar/:username` (fetch one) - closes the loop on the leaderboard's avatar images, which are currently just a placeholder.
+- **Leaderboard/stats API** - `GET /api/leaderboard?period=day|week|all` and `GET /api/users/:username/stats` (pixel count, level, XP) - formalizes what `artists.html`/`artists.jsx` and the profile page's stats panel already assume exists.
+
 ## 🚀 DB deliverable
 
 For this deliverable I did the following. I checked the box `[x]` and added a description for things I completed.
