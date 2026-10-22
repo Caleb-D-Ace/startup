@@ -502,9 +502,161 @@ main {
   border-radius: var(--radius);
 }
 
-.swatch[aria-pressed="true"] {
+/* BrushColorControl: quick swatches arrayed on one line (reuses
+   .color-swatches/.swatch as-is), plus a bigger/outlined first swatch --
+   promoteToFront always keeps the currently-selected color there. */
+.brush-color-control {
+  display: flex;
+}
+
+.quick-swatch-row {
+  flex-wrap: nowrap; /* one line, per design -- the narrow-viewport popup is the fallback, not wrapping */
+  max-width: none; /* .color-swatches' 11rem cap doesn't apply here -- see .swatches-popup below for its own, reinstated */
+}
+
+/* The outline is tied to .swatch-selected (always exactly the first
+   slot), not to [aria-pressed="true"] -- a color can coincidentally also
+   appear elsewhere further back in the stack, and aria-pressed is true
+   there too (truthfully: that swatch IS the selected color), but only the
+   first position should ever get the visual "this is what's selected"
+   treatment. */
+.swatch-selected {
+  width: 2rem;
+  height: 2rem;
   border-color: var(--color-accent);
   box-shadow: 0 0 0 2px var(--color-accent);
+}
+
+/* Speech-bubble popover -- positioned relative to its own small trigger
+   wrapper (position:relative), so it never moves surrounding page content
+   and isn't an actual separate browser window. Shared by
+   ColorPalettePicker and BrushColorControl's narrow-viewport swatches
+   popup (.swatches-popup also gets this class). */
+.bubble-trigger-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.speech-bubble {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 90;
+  margin-top: 0.75rem;
+}
+
+.speech-bubble::before,
+.speech-bubble::after {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: solid transparent;
+}
+
+.speech-bubble::before {
+  border-width: 0.55rem;
+  border-bottom-color: var(--color-border);
+}
+
+.speech-bubble::after {
+  border-width: 0.5rem;
+  border-bottom-color: var(--color-surface);
+  margin-top: 0.05rem; /* nudges the inner triangle down slightly so only the outer one's edge shows, like the box's own 1px border */
+}
+
+/* Invisible full-viewport click-catcher behind a speech bubble -- clicking
+   anywhere outside the bubble closes it, the same mechanism as the header
+   hamburger dropdown's .auth-backdrop. Sits below .speech-bubble's
+   z-index so clicks on the bubble itself still reach its own content. */
+.bubble-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 85;
+}
+
+/* "X" close button -- no close/X icon asset exists in public/images, so
+   this is a styled "x" character instead, sized/positioned the same way
+   across both speech bubbles that use it. */
+.bubble-close-btn {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  font-size: 1.1rem;
+  line-height: 1;
+  border-radius: var(--radius);
+}
+
+/* Narrow-viewport fallback (see BrushColorControl's useIsNarrow): a single
+   swatch-styled button that opens the quick-swatch row in the same kind
+   of speech-bubble popup as the custom color picker, instead of the row
+   wrapping/overflowing the toolbar. */
+.swatches-popup {
+  padding: 0.75rem;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.swatches-popup .quick-swatch-row {
+  flex-wrap: wrap; /* colors stay arrayed horizontally, just wrapping to 2 lines */
+  /* explicit width, not just max-width -- .swatches-popup is absolutely
+     positioned (part of .speech-bubble), so it shrink-to-fits its content
+     by default; without a real width the row collapses toward its
+     narrowest possible line instead of actually using the space below. */
+  width: 10rem;
+}
+
+/* ColorPalettePicker: the full 256-color panel -- 64 swatches at a time
+   (one blue-level slice), deliberately borderless so adjacent colors read
+   as one continuous gradient field instead of a grid of separate chips. */
+.color-palette-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.palette-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+}
+
+.palette-swatch {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+}
+
+/* White, not var(--color-accent), is the one deliberate exception to this
+   file's "no hardcoded colors" rule -- the whole point is a selection ring
+   that reads against any of the 256 arbitrary swatch backgrounds behind
+   it, which an accent color tuned for the site's own palette can't
+   guarantee. The subtle dark ring on top keeps it visible against pale
+   swatches too, where a white-on-white outline would otherwise vanish. */
+.palette-swatch[aria-pressed="true"] {
+  outline: 2px solid #ffffff;
+  outline-offset: -2px;
+  box-shadow: inset 0 0 0 3px rgba(0, 0, 0, 0.35);
+}
+
+.palette-blue-slider {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .toolbar fieldset {

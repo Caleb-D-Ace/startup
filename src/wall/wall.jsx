@@ -1,6 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { BrushColorControl } from '../BrushColorControl';
+
+const DEFAULT_BRUSH_COLOR = 3;
 
 export function Wall() {
+  const [brushColor, setBrushColor] = useState(DEFAULT_BRUSH_COLOR);
+
   return (
     <>
       {/* Application data placeholder: the live shared canvas */}
@@ -39,13 +44,13 @@ export function Wall() {
             </div>
 
             <div className="field">
-              <label id="color-picker-label">Brush color</label>
-              <div id="color-picker" className="color-swatches" role="radiogroup" aria-labelledby="color-picker-label"></div>
+              <label htmlFor="brush-size">Brush size</label>
+              <input type="range" id="brush-size" name="brush-size" min="1" max="50" value="5" />
             </div>
 
             <div className="field">
-              <label htmlFor="brush-size">Brush size</label>
-              <input type="range" id="brush-size" name="brush-size" min="1" max="50" value="5" />
+              <label id="color-picker-label">Brush color</label>
+              <BrushColorControl selectedIndex={brushColor} onSelect={setBrushColor} />
             </div>
           </div>
 

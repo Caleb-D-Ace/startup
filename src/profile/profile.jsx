@@ -1,8 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../AuthContext';
+import { BrushColorControl } from '../BrushColorControl';
+
+const DEFAULT_BRUSH_COLOR = 3;
 
 export function Profile() {
   const { username } = useAuth();
+  const [brushColor, setBrushColor] = useState(DEFAULT_BRUSH_COLOR);
 
   return (
     <>
@@ -59,13 +63,13 @@ export function Profile() {
             </div>
 
             <div className="field">
-              <label id="avatar-color-picker-label">Brush color</label>
-              <div id="avatar-color-picker" className="color-swatches" role="radiogroup" aria-labelledby="avatar-color-picker-label"></div>
+              <label htmlFor="avatar-brush-size">Brush size</label>
+              <input type="range" id="avatar-brush-size" name="avatar-brush-size" min="1" max="50" value="5" />
             </div>
 
             <div className="field">
-              <label htmlFor="avatar-brush-size">Brush size</label>
-              <input type="range" id="avatar-brush-size" name="avatar-brush-size" min="1" max="50" value="5" />
+              <label id="avatar-color-picker-label">Brush color</label>
+              <BrushColorControl selectedIndex={brushColor} onSelect={setBrushColor} />
             </div>
           </div>
 
