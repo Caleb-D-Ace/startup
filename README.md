@@ -157,6 +157,40 @@ For this deliverable I did the following. I checked the box `[x]` and added a de
 - [ ] **All functionality implemented or mocked out** - I did not complete this part of the deliverable.
 - [ ] **Hooks** - I did not complete this part of the deliverable.
 
+#### Canvas API plan (or at least the mockup)
+
+This is the actual painting application. The backend code will come later (databases and network functionality), so this is purely the client-side mockup. It will have a `canvasApi.js` module that exposes the **same function signatures the real future HTTP + WebSocket API will have** (otherwise this would be a crappy mockup), just backed by `localStorage` and `setInterval` instead of a server. Swapping it out later means reimplementing this one module, not every component that calls it. Much easier.
+
+```mermaid
+flowchart TB
+    subgraph Browser["Browser -- everything mocked client-side for this deliverable"]
+        Wall["Wall.jsx\n(owns tool/color/size state)"]
+        PC["PaintCanvas.jsx\n(canvas ref, draws strokes,\noptimistic local render)"]
+        Artists["Artists.jsx\n(leaderboard)"]
+        Profile["Profile.jsx\n(avatar canvas)"]
+        API["canvasApi.js -- the mock module"]
+        LS["localStorage\n(persists grid + avatars\nacross reloads)"]
+        Sim["setInterval\n(simulates other painters +\nlive activity -- the course's\nown WebSocket-mock pattern)"]
+    end
+
+    Wall -->|"tool/color/size props"| PC
+    PC -->|"submitStroke(stroke)"| API
+    API -->|"getCanvasState() on mount"| PC
+    API <-->|"read/write grid"| LS
+    Sim -->|"fake peer strokes"| API
+    API -->|"subscribe(callback):\npixel updates, activity feed,\nviewer count"| Wall
+    API -->|"derived pixel counts"| Artists
+    Profile -->|"saveAvatar() / loadAvatar()"| API
+
+    Later["Later deliverables:\nService -> real HTTP endpoints\nWebSocket -> real server push\nDB -> real persistence"]
+    API -.->|"same function signatures --\nswap internals only"| Later
+```
+
+- **`canvasApi.js`** - the mock module, with the function names matching the real API planned under React part 1/Service above so the eventual swap is a drop-in: `getCanvasState()`, `submitStroke(stroke)`, `getPixelOwner(x, y)`, `subscribe(callback)`/`unsubscribe(callback)` (pub-sub, since there's no WebSocket yet), `saveAvatar(username, pixels)`, `loadAvatar(username)`. Backed by `localStorage` so that the user can paint something and have it locally persist.
+- **Simulated activity** - a `setInterval` inside `canvasApi.js` periodically paints a small fake stroke from a random fake username and pushes it through the same `subscribe()` callback real strokes use. This simulates live player updates from other users, matching the course's own `setInterval`-for-WebSocket mocking example.
+- **Component split (realized from the part 1 plan)** - `Wall.jsx` owns `tool`/`color`/`size` state via `useState` and passes it down as props; `PaintCanvas.jsx` owns the `<canvas>` ref, pointer-event handlers, and renders every stroke locally and optimistically the instant it happens (never waiting on `canvasApi`, same as a real network call never should block local drawing). `useEffect` loads initial state and subscribes to `canvasApi` on mount, unsubscribing on unmount.
+- **Newly in scope this deliverable** (beyond what part 1 planned) - porting the old vanilla-JS `palette.js` swatch picker into a real `ColorSwatches.jsx` component driven by `useState`; wiring `profile.jsx`'s avatar canvas to actually save/load via `canvasApi`'s mocked avatar functions; and having `artists.jsx`'s leaderboard derive its rows from the mock store's pixel counts instead of hardcoded placeholder rows.
+
 ## 🚀 Service deliverable
 
 For this deliverable I did the following. I checked the box `[x]` and added a description for things I completed.
