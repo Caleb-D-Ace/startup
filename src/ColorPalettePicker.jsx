@@ -5,11 +5,12 @@
 // Swatches are borderless -- adjacent colors read as a continuous
 // gradient -- with just a white outline on whichever one matches
 // selectedIndex. Picking a color does NOT close the panel; the user closes
-// it explicitly (onClose) so they can keep clicking around without
-// getting ejected.
+// it explicitly (onClose, the X button) so they can keep clicking around
+// without getting ejected.
 //
-// STUB -- signatures and layout plan only, not implemented yet. Reviewing
-// the shape before filling it in.
+// Renders as a speech-bubble popover (see .speech-bubble in app.css) --
+// positioned relative to its own trigger wrapper, doesn't move any other
+// page content, not an actual separate browser window.
 
 import React, { useState } from 'react';
 import { PALETTE } from './canvasApi';
@@ -29,37 +30,59 @@ export function ColorPalettePicker({ selectedIndex, onSelect, onClose }) {
   // Which of the 4 blue-level grids is shown. Starts on selectedIndex's
   // own blue level, so opening the panel shows the grid the current color
   // actually lives in.
-  const [blueLevel, setBlueLevel] = useState(() => {
-    // TODO: selectedIndex & 0b11 (the 2 low bits are the blue level)
-    return 0;
-  });
+  const [blueLevel, setBlueLevel] = useState(() => selectedIndex & 0b11);
 
   function handleSwatchClick(paletteIndex) {
-    // TODO: onSelect(paletteIndex) -- no close
+    onSelect(paletteIndex);
   }
 
   function handleBlueLevelChange(event) {
-    // TODO: setBlueLevel(Number(event.target.value))
+    setBlueLevel(Number(event.target.value));
   }
 
   function handleCloseClick() {
-    // TODO: onClose()
+    onClose();
+  }
+
+  const indices = [];
+  for (let red = 0; red < GRID_SIZE; red++) {
+    for (let green = 0; green < GRID_SIZE; green++) {
+      indices.push((red << 5) | (green << 2) | blueLevel);
+    }
   }
 
   return (
-    <div className="color-palette-picker">
-      {/* TODO: close button -- onClick -> handleCloseClick */}
+    <div className="color-palette-picker speech-bubble">
+      <button type="button" className="bubble-close-btn" aria-label="Close" onClick={handleCloseClick}>
+        &times;
+      </button>
 
       <div className="palette-grid" role="radiogroup" aria-label="Brush color">
-        {/* TODO: nested loop, red 0-7 x green 0-7 at the current blueLevel ->
-            index = (red << 5) | (green << 2) | blueLevel -> swatch button.
-            No border by default (adjacent colors should read as one
-            continuous gradient field); a white outline only when
-            index === selectedIndex. onClick -> handleSwatchClick(index) */}
+        {indices.map((index) => (
+          <button
+            key={index}
+            type="button"
+            className="palette-swatch"
+            style={{ backgroundColor: PALETTE[index] }}
+            aria-pressed={index === selectedIndex}
+            aria-label={PALETTE[index]}
+            onClick={() => handleSwatchClick(index)}
+          />
+        ))}
       </div>
 
-      {/* TODO: "Add Blue" slider -- range input, min=0 max={BLUE_LEVELS - 1}
-          step=1, value=blueLevel, onChange -> handleBlueLevelChange */}
+      <div className="palette-blue-slider">
+        <label htmlFor="palette-blue-level">Add Blue</label>
+        <input
+          type="range"
+          id="palette-blue-level"
+          min="0"
+          max={BLUE_LEVELS - 1}
+          step="1"
+          value={blueLevel}
+          onChange={handleBlueLevelChange}
+        />
+      </div>
     </div>
   );
 }
