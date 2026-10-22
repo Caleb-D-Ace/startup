@@ -19,17 +19,16 @@ export const CANVAS_HEIGHT = 720;
 
 // ---- The 256-color palette (true "8-bit color") -------------------------
 // 3 bits red, 3 bits green, 2 bits blue -- 8x8x4 = exactly 256 values, the
-// classic RGB332 scheme (same idea as old VGA 8-bit color modes). Chosen
-// specifically because matching an arbitrary color (e.g. a TheColorAPI
-// suggestion) to "the nearest paintable color" becomes pure bit math
-// instead of a 256-way nearest-neighbor search: quantize each channel down
-// to its bit depth and pack the bits into one byte.
-
+// classic RGB332 scheme (same idea as old VGA 8-bit color modes). This helps
+// keep pixel information small so that network requests and responses don't
+// take up much time or space.
 function clampChannel(value) {
   return Math.min(255, Math.max(0, value));
 }
 
-/** RGB (0-255 each) -> the nearest of the 256 palette indices. */
+/** RGB (0-255 each) -> the nearest of the 256 palette indices.
+ * This method converts a standard rgb color to our 8-bit color scheme.
+ */
 export function rgbToPaletteIndex(r, g, b) {
   const r3 = Math.round((clampChannel(r) / 255) * 7); // 3 bits: 0-7
   const g3 = Math.round((clampChannel(g) / 255) * 7); // 3 bits: 0-7
@@ -178,6 +177,25 @@ export function loadAvatar(username) {
   } catch {
     return null;
   }
+}
+
+// STUB -- new, not implemented yet. Persists BrushColorControl's quick-
+// swatch MRU list -- same localStorage pattern as saveAvatar/loadAvatar
+// above, once filled in.
+//
+// Open question (see BrushColorControl.jsx): what's `key` here -- the
+// username (one list per logged-in user, like avatars), or a single fixed
+// key shared by everyone/used while logged out?
+
+/** @param {string} key  @param {number[]} paletteIndices */
+export function saveQuickSwatches(key, paletteIndices) {
+  // TODO
+}
+
+/** @param {string} key  @returns {number[] | null} */
+export function loadQuickSwatches(key) {
+  // TODO
+  return null;
 }
 
 // ---- Simulated peer activity --------------------------------------------
