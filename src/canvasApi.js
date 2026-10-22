@@ -179,23 +179,71 @@ export function loadAvatar(username) {
   }
 }
 
-// STUB -- new, not implemented yet. Persists BrushColorControl's quick-
-// swatch MRU list -- same localStorage pattern as saveAvatar/loadAvatar
-// above, once filled in.
-//
-// Open question (see BrushColorControl.jsx): what's `key` here -- the
-// username (one list per logged-in user, like avatars), or a single fixed
-// key shared by everyone/used while logged out?
+// Persists BrushColorControl's quick-swatch list, keyed per username (one
+// list per logged-in user, same idea as avatars). Unlike avatars, the set
+// of usernames here is unbounded and not under our control -- anyone can
+// "log in" as a new username at any time (see AuthContext) -- so without a
+// cap, someone could balloon localStorage by cycling through thousands of
+// throwaway usernames. QUICK_SWATCH_USERS_KEY tracks which usernames
+// currently have a saved list, in plain FIFO insertion order (not MRU --
+// re-saving an existing username's list just updates their data in place,
+// it doesn't move them in the queue): once MAX_QUICK_SWATCH_USERS is hit,
+// the username that was tracked *first* is evicted when a new one arrives,
+// regardless of how recently that first one was actually used. Simple,
+// and the stated cost (an idle username can eventually lose its list) is
+// an accepted tradeoff, not a bug.
 
-/** @param {string} key  @param {number[]} paletteIndices */
-export function saveQuickSwatches(key, paletteIndices) {
-  // TODO
+const MAX_QUICK_SWATCH_USERS = 10;
+const QUICK_SWATCH_STORAGE_KEY_PREFIX = "paintwall-quickswatches-";
+const QUICK_SWATCH_USERS_KEY = "paintwall-quickswatches-users"; // tracked usernames, FIFO order
+
+function loadTrackedUsers() {
+  try {
+    const raw = localStorage.getItem(QUICK_SWATCH_USERS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
 }
 
-/** @param {string} key  @returns {number[] | null} */
-export function loadQuickSwatches(key) {
-  // TODO
-  return null;
+/** @param {string} username  @param {number[]} paletteIndices */
+export function saveQuickSwatches(username, paletteIndices) {
+  try {
+    localStorage.setItem(QUICK_SWATCH_STORAGE_KEY_PREFIX + username, JSON.stringify(paletteIndices));
+  } catch {
+    return; // storage full/unavailable -- fine for a mock
+  }
+
+  const trackedUsers = loadTrackedUsers();
+  if (trackedUsers.includes(username)) {
+    return; // already tracked -- FIFO position doesn't change on re-save
+  }
+
+  trackedUsers.push(username);
+  if (trackedUsers.length > MAX_QUICK_SWATCH_USERS) {
+    const evicted = trackedUsers.shift(); // oldest-tracked username, evicted first
+    try {
+      localStorage.removeItem(QUICK_SWATCH_STORAGE_KEY_PREFIX + evicted);
+    } catch {
+      // fine
+    }
+  }
+
+  try {
+    localStorage.setItem(QUICK_SWATCH_USERS_KEY, JSON.stringify(trackedUsers));
+  } catch {
+    // fine -- the list itself already saved above either way
+  }
+}
+
+/** @param {string} username  @returns {number[] | null} */
+export function loadQuickSwatches(username) {
+  try {
+    const raw = localStorage.getItem(QUICK_SWATCH_STORAGE_KEY_PREFIX + username);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
 }
 
 // ---- Simulated peer activity --------------------------------------------
