@@ -1,6 +1,6 @@
 // Pure XP/leveling math -- no storage, no React. xpForLevel(n) follows an
-// n^1.2 power curve (an "exponential" leveling feel, just gentler than a
-// true exponential), scaled so completing level 1 takes ~500 xp.
+// n^XP_LEVEL_EXPONENT power curve (an "exponential" leveling feel, just
+// gentler than a true exponential), scaled by XP_LEVEL_BASE.
 
 export const XP_LEVEL_BASE = 10000;
 export const XP_LEVEL_EXPONENT = 2.5;

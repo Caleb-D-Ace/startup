@@ -91,13 +91,12 @@ const SIMULATION_INTERVAL_MS = 4000;
 const subscribers = new Set();
 let simulationTimer = null;
 
-// Caps how often a single username's painting generates an "activity"
+// Caps how often one username's painting generates an "activity"
 // notification -- a fast drag flushes a chunk every ~28px/250ms, which
-// would otherwise flood the live feed with one user's own repeated
-// "painted near" messages. In-memory only (not persisted), per username,
-// uncapped in size -- unlike the localStorage-backed per-user stores
-// elsewhere, a username here costs one Map entry (a string key + a
-// number), not worth a FIFO eviction scheme over.
+// would otherwise flood the feed with one user's own repeated messages.
+// In-memory only, uncapped in size -- a Map entry here is a string key
+// and a number, cheap enough not to need the FIFO eviction the
+// localStorage-backed stores below use.
 const ACTIVITY_THROTTLE_MS = 5000;
 const lastActivityAt = new Map(); // username -> timestamp of its last emitted activity notification
 
@@ -196,13 +195,10 @@ export function submitStroke(stroke) {
   scheduleSave();
   notify({ type: "stroke", pixels, username: stroke.username });
 
-  // One activity message per submission (so per chunk, not per whole drag)
-  // -- fires for every caller uniformly, real strokes and the simulated
-  // fake-peer stroke below alike, so there's a single place that decides
-  // what an activity message looks like instead of two. Throttled per
-  // username so one fast drag's many chunk flushes don't flood the feed
-  // with the same person's own messages; painting, persistence, and xp
-  // above are all unaffected by this -- only the notification is skipped.
+  // One activity message per submission, throttled per username -- real
+  // strokes and the fake-peer stroke below share this same path rather
+  // than each building their own message. Only the notification is
+  // skipped when throttled; painting, persistence, and xp above still run.
   if (pixels.length > 0) {
     const now = Date.now();
     const lastNotifiedAt = lastActivityAt.get(stroke.username) ?? 0;
