@@ -690,10 +690,15 @@ main {
   overflow: auto;
 }
 
+/* Deliberately NOT width:100%/height:auto -- brush size is chosen in real
+   canvas pixels (see MIN_BRUSH_SIZE/MAX_BRUSH_SIZE in brush.js), so the
+   canvas has to render at its native 1280x720 resolution at all times, or
+   the same stroke would look a different size depending on how wide the
+   browser window happens to be. .canvas-scroll's overflow:auto is what
+   lets a narrower viewport see the whole wall, via scrolling/panning
+   instead of shrinking it. */
 #paintwall-canvas {
   display: block;
-  width: 100%;
-  height: auto;
 }
 
 /* Stays a 400x400 square, but shrinks to fit narrow viewports instead of
@@ -938,10 +943,6 @@ td {
   .canvas-scroll {
     height: 65vh;
     min-height: 20rem;
-  }
-
-  #paintwall-canvas {
-    height: 100%;
   }
 
   #toolbar {

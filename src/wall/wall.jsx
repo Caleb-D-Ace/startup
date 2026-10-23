@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BrushColorControl, DEFAULT_BRUSH_COLOR } from '../BrushColorControl';
 import { PaintCanvas } from '../PaintCanvas';
 import { getCanvasState, subscribe, submitStroke, CANVAS_WIDTH, CANVAS_HEIGHT } from '../canvasApi';
@@ -13,9 +13,25 @@ export function Wall() {
   const [brushColor, setBrushColor] = useState(DEFAULT_BRUSH_COLOR);
   const [brushSize, setBrushSize] = useState(DEFAULT_BRUSH_SIZE);
 
-  // Keyed "x,y", same shape canvasApi's own grid uses -- avoids translating
-  // back and forth between representations on every update.
-  const [canvasGrid, setCanvasGrid] = useState(() => getCanvasState());
+  // Held in a ref, mutated in place via push(), rather than React state --
+  // a chunk commits every ~28px/250ms while dragging, and rebuilding this
+  // from scratch on every one of those scales with the entire session's
+  // painted history instead of just what's new. Seeded synchronously here
+  // (not in a useEffect) so existing history is visible on the first paint.
+  const pixelsRef = useRef(null);
+  if (pixelsRef.current === null) {
+    const grid = getCanvasState();
+    pixelsRef.current = Object.entries(grid).map(([key, value]) => {
+      const [x, y] = key.split(',').map(Number);
+      return { x, y, paletteIndex: value.paletteIndex };
+    });
+  }
+
+  // pixelsRef.current is always the same array object (mutated, not
+  // replaced), so PaintCanvas can't tell "something changed" from its
+  // reference the way it normally would with React data -- this version
+  // counter is the actual change signal instead.
+  const [pixelsVersion, setPixelsVersion] = useState(0);
 
   // Our own strokes flow through this same subscription rather than being
   // applied locally on submit -- treating "what I just painted" and "what a
@@ -26,25 +42,13 @@ export function Wall() {
       if (event.type !== 'stroke') {
         return;
       }
-      setCanvasGrid((prev) => {
-        const next = { ...prev };
-        event.pixels.forEach(({ x, y, paletteIndex }) => {
-          next[`${x},${y}`] = { paletteIndex, username: event.username, paintedAt: Date.now() };
-        });
-        return next;
+      event.pixels.forEach(({ x, y, paletteIndex }) => {
+        pixelsRef.current.push({ x, y, paletteIndex });
       });
+      setPixelsVersion((v) => v + 1);
     });
     return unsubscribe;
   }, []);
-
-  const pixels = useMemo(
-    () =>
-      Object.entries(canvasGrid).map(([key, value]) => {
-        const [x, y] = key.split(',').map(Number);
-        return { x, y, paletteIndex: value.paletteIndex };
-      }),
-    [canvasGrid]
-  );
 
   const brush = { shape: BRUSH_SHAPE, size: brushSize, paletteIndex: brushColor };
 
@@ -66,7 +70,8 @@ export function Wall() {
             id="paintwall-canvas"
             width={CANVAS_WIDTH}
             height={CANVAS_HEIGHT}
-            pixels={pixels}
+            pixels={pixelsRef.current}
+            pixelsVersion={pixelsVersion}
             brush={brush}
             onStrokeChunk={handleStrokeChunk}
           >
@@ -74,8 +79,6 @@ export function Wall() {
             wall will be rendered.
           </PaintCanvas>
         </div>
-
-
 
         <div id="toolbar" className="toolbar">
           <h3>Drawing Tools</h3>

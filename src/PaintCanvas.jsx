@@ -14,7 +14,7 @@
 // chunks still connect with no seam.
 
 import React, { useRef, useEffect } from 'react';
-import { getBrushCells, interpolatePoints, CHUNK_DISTANCE_PX, CHUNK_TIME_MS } from './brush';
+import { interpolatePoints, CHUNK_DISTANCE_PX, CHUNK_TIME_MS } from './brush';
 import { paletteIndexToHex } from './canvasApi';
 
 /**
@@ -22,37 +22,43 @@ import { paletteIndexToHex } from './canvasApi';
  *   CSS targeting a specific canvas by id keeps working.
  * @param {number} width - canvas backing width, in pixels
  * @param {number} height - canvas backing height, in pixels
- * @param {{x:number,y:number,paletteIndex:number}[]} pixels - committed pixels to render (parent-owned)
+ * @param {{x:number,y:number,paletteIndex:number}[]} pixels - committed pixels
+ *   to render (parent-owned). Must be append-only -- a parent should only
+ *   ever push new entries onto the same array (never replace it, reorder
+ *   it, or mutate an existing entry), pairing each push with a bump to
+ *   `pixelsVersion`. That's what lets this component pick up exactly where
+ *   it left off on every update instead of re-scanning the whole thing.
+ * @param {number} pixelsVersion - increments whenever `pixels` gets new
+ *   entries appended. `pixels` itself is a stable array reference (mutated
+ *   in place by the parent, not replaced), so this is the actual change
+ *   signal -- React wouldn't otherwise notice anything happened.
  * @param {{shape:string, size:number, paletteIndex:number}} brush - current tool config
  * @param {(chunk: {points:{x:number,y:number}[], shape:string, size:number, paletteIndex:number}) => void} onStrokeChunk
  * @param {React.ReactNode} [children] - fallback content for browsers without canvas support
  */
-export function PaintCanvas({ id, width, height, pixels, brush, onStrokeChunk, children }) {
+export function PaintCanvas({ id, width, height, pixels, pixelsVersion, brush, onStrokeChunk, children }) {
   const canvasRef = useRef(null);
 
-  // Holds the in-progress drag's not-yet-flushed state across mousemove
-  // calls without triggering re-renders -- none of this is ever rendered
-  // from directly (the canvas draws imperatively), so it doesn't belong in
-  // useState. newPointCount is tracked separately from pendingPoints.length
-  // because pendingPoints is re-seeded with the previous chunk's last point
-  // for seam continuity -- that seed alone shouldn't count as "new content
-  // worth flushing" (a plain click with no movement needs to still flush
-  // its single mousedown point, but a flush triggered with nothing but a
-  // leftover seam point should not send an empty-looking chunk).
+  // In-progress drag state, kept out of useState since it's never rendered
+  // from directly. newPointCount is separate from pendingPoints.length
+  // because pendingPoints carries over a seam point after each flush, which
+  // shouldn't itself count as new content worth flushing.
   const strokeRef = useRef(null); // { lastPoint, pendingPoints, newPointCount, distanceSinceFlush, lastFlushTime }
 
-  // Redraws the full committed `pixels` list from scratch whenever it
-  // changes (and on mount) -- simple full-clear-and-redraw rather than
-  // incremental, which is fine at this scale (sparse pixel counts, local
-  // mock storage).
+  const drawnCountRef = useRef(0);
+
   useEffect(() => {
     const ctx = canvasRef.current.getContext('2d');
-    ctx.clearRect(0, 0, width, height);
-    pixels.forEach(({ x, y, paletteIndex }) => {
+    for (let i = drawnCountRef.current; i < pixels.length; i++) {
+      const { x, y, paletteIndex } = pixels[i];
       ctx.fillStyle = paletteIndexToHex(paletteIndex);
       ctx.fillRect(x, y, 1, 1);
-    });
-  }, [pixels, width, height]);
+    }
+    drawnCountRef.current = pixels.length;
+    // pixels is a stable, mutated-in-place reference -- pixelsVersion is
+    // the real dependency; see the prop docs above.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pixelsVersion]);
 
   function canvasPointFromEvent(event) {
     const canvas = canvasRef.current;
@@ -65,19 +71,26 @@ export function PaintCanvas({ id, width, height, pixels, brush, onStrokeChunk, c
     };
   }
 
-  // Draws brush-shaped dabs directly onto the canvas for these points --
-  // the optimistic live-preview path, called on every mousemove regardless
-  // of the chunk-flush cadence so the trail never looks segmented. Reuses
-  // getBrushCells (the exact same cells rasterizeStroke/submitStroke will
-  // later commit) rather than ctx.arc(), so the live preview is
-  // pixel-identical to what actually gets persisted.
+  // Optimistic live-preview dabs, drawn on every mousemove regardless of
+  // the chunk-flush cadence so the trail never looks segmented. One
+  // ctx.arc() fill per point, rather than looping getBrushCells and
+  // filling each cell individually -- a single native draw call regardless
+  // of brush size, much cheaper than thousands of 1x1 fillRects for a large
+  // brush. This makes the live preview a geometric circle rather than
+  // getBrushCells' exact lattice-point circle, so it can differ by a pixel
+  // or two at a dab's edge from the canonical rasterization -- invisible at
+  // normal sizes, and self-corrects once the chunk's real pixels land.
   function drawDabs(points) {
     const ctx = canvasRef.current.getContext('2d');
     ctx.fillStyle = paletteIndexToHex(brush.paletteIndex);
     points.forEach(({ x, y }) => {
-      getBrushCells(brush.shape, brush.size, x, y).forEach((cell) => {
-        ctx.fillRect(cell.x, cell.y, 1, 1);
-      });
+      if (brush.size === 0) {
+        ctx.fillRect(x, y, 1, 1);
+        return;
+      }
+      ctx.beginPath();
+      ctx.arc(x, y, brush.size, 0, Math.PI * 2);
+      ctx.fill();
     });
   }
 

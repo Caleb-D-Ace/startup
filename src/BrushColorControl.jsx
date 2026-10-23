@@ -23,13 +23,8 @@ const NARROW_BREAKPOINT_PX = 640; // matches app.css's existing 40rem toolbar ti
 
 // Black, White, then the rest of the originally-requested vibrant colors
 // (RGB332 indices) -- the single source of truth for both the default
-// brush color and the quick-swatch preset list. Deriving both from one
-// object (via withPromoted, below) guarantees DEFAULT_BRUSH_COLOR can never
-// also appear elsewhere in DEFAULT_QUICK_SWATCHES -- that used to be able
-// to happen silently (e.g. a default of Blue colliding with Blue's natural
-// position in a separately hand-written preset array), which both wasted a
-// swatch slot and caused the same color to render as "selected" in two
-// places at once.
+// brush color and the quick-swatch preset list, so DEFAULT_BRUSH_COLOR can
+// never also appear elsewhere in DEFAULT_QUICK_SWATCHES (see withPromoted).
 const NAMED_SWATCHES = {
   black: 0,
   white: 255,

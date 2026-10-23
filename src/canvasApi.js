@@ -89,22 +89,56 @@ const SIMULATION_INTERVAL_MS = 4000;
 const subscribers = new Set();
 let simulationTimer = null;
 
+// submitStroke runs on every chunk flush (every ~28px/250ms while
+// dragging), so re-parsing/re-serializing the *entire* grid on every call
+// scales with total session history, not with what's new. gridCache keeps
+// one in-memory copy (loaded from localStorage once) and the actual write
+// is debounced, so a rapid burst of flushes from one drag collapses into a
+// single localStorage.setItem shortly after painting pauses.
+let gridCache = null;
+let saveTimer = null;
+const SAVE_DEBOUNCE_MS = 400;
+
 function loadGrid() {
-  try {
-    const raw = localStorage.getItem(CANVAS_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
+  if (gridCache === null) {
+    try {
+      const raw = localStorage.getItem(CANVAS_STORAGE_KEY);
+      gridCache = raw ? JSON.parse(raw) : {};
+    } catch {
+      gridCache = {};
+    }
   }
+  return gridCache;
 }
 
-function saveGrid(grid) {
+function flushSave() {
+  if (saveTimer) {
+    clearTimeout(saveTimer);
+    saveTimer = null;
+  }
   try {
-    localStorage.setItem(CANVAS_STORAGE_KEY, JSON.stringify(grid));
+    localStorage.setItem(CANVAS_STORAGE_KEY, JSON.stringify(gridCache));
   } catch {
     // localStorage full or unavailable -- fine for a mock, painted pixels
     // just won't persist across a reload.
   }
+}
+
+function scheduleSave() {
+  if (saveTimer) {
+    clearTimeout(saveTimer);
+  }
+  saveTimer = setTimeout(flushSave, SAVE_DEBOUNCE_MS);
+}
+
+// Safety net: if the tab closes mid-debounce, flush immediately rather than
+// silently losing however many strokes were painted in the last 400ms.
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeunload", () => {
+    if (saveTimer) {
+      flushSave();
+    }
+  });
 }
 
 function notify(event) {
@@ -136,7 +170,7 @@ export function submitStroke(stroke) {
     return { x, y, paletteIndex: stroke.paletteIndex, username: stroke.username };
   });
 
-  saveGrid(grid);
+  scheduleSave();
   notify({ type: "stroke", pixels, username: stroke.username });
   return pixels;
 }
