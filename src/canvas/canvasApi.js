@@ -169,6 +169,17 @@ export function getCanvasState() {
 }
 
 /**
+ * Wipes every painted pixel. For testing/demoing, not a regular end-user
+ * feature. Leaves xp alone -- it's lifetime, not tied to the canvas's
+ * current contents (see submitStroke's doc comment).
+ */
+export function clearCanvas() {
+  gridCache = {};
+  flushSave();
+  notify({ type: "clear" });
+}
+
+/**
  * Submits a finished stroke, or one chunk of a longer one (PaintCanvas
  * flushes every CHUNK_DISTANCE_PX/CHUNK_TIME_MS rather than waiting for the
  * whole drag -- this function doesn't know or care which):

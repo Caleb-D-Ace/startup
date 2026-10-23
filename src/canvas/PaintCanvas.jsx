@@ -51,11 +51,14 @@ export function drawPixels(ctx, pixels, startIndex = 0) {
  * @param {number} width - canvas backing width, in pixels
  * @param {number} height - canvas backing height, in pixels
  * @param {{x:number,y:number,paletteIndex:number}[]} pixels - committed pixels
- *   to render (parent-owned). Must be append-only -- a parent should only
- *   ever push new entries onto the same array (never replace it, reorder
- *   it, or mutate an existing entry), pairing each push with a bump to
- *   `pixelsVersion`. That's what lets this component pick up exactly where
- *   it left off on every update instead of re-scanning the whole thing.
+ *   to render (parent-owned). Normally append-only -- a parent should only
+ *   ever push new entries onto the same array (never reorder it or mutate
+ *   an existing entry), pairing each push with a bump to `pixelsVersion`.
+ *   That's what lets this component pick up exactly where it left off on
+ *   most updates instead of re-scanning the whole thing. The one exception
+ *   is a full reset (e.g. "Clear Canvas"): swap `pixels` for a new, shorter
+ *   array and bump `pixelsVersion` -- a shrink is detected below and wipes
+ *   the canvas before redrawing, instead of trying to append negatively.
  * @param {number} pixelsVersion - increments whenever `pixels` gets new
  *   entries appended. `pixels` itself is a stable array reference (mutated
  *   in place by the parent, not replaced), so this is the actual change
@@ -85,7 +88,14 @@ export function PaintCanvas({ id, width, height, pixels, pixelsVersion, brush, t
   const drawnCountRef = useRef(0);
 
   useEffect(() => {
-    const ctx = canvasRef.current.getContext('2d');
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (pixels.length < drawnCountRef.current) {
+      // pixels was reset, not appended to -- wipe the bitmap and redraw
+      // from scratch, since incremental drawing can't handle a shrink.
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawnCountRef.current = 0;
+    }
     drawPixels(ctx, pixels, drawnCountRef.current);
     drawnCountRef.current = pixels.length;
     // pixels is a stable, mutated-in-place reference -- pixelsVersion is

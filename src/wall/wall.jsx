@@ -6,6 +6,7 @@ import {
   getPixelOwner,
   subscribe,
   submitStroke,
+  clearCanvas,
   paletteIndexToHex,
   hexToPaletteIndex,
   CANVAS_WIDTH,
@@ -153,6 +154,13 @@ export function Wall() {
         // "joined" reads naturally above "painted" for the same instant --
         // not reversed, since newMessages is already built in that order.
         setActivityFeed((prev) => [...newMessages, ...prev].slice(0, ACTIVITY_FEED_LIMIT));
+        return;
+      }
+
+      if (event.type === 'clear') {
+        pixelsRef.current = [];
+        setPixelsVersion((v) => v + 1);
+        setInspectedPixel(null);
       }
     });
     return unsubscribe;
@@ -170,6 +178,23 @@ export function Wall() {
 
   function handleStrokeChunk(chunk) {
     submitStroke({ ...chunk, username: username ?? 'anon_guest' });
+  }
+
+  // A confirm() guard since this wipes the shared wall for everyone, not
+  // just this browser -- cheap insurance against a stray click. The actual
+  // reset (pixelsRef, pixelsVersion) happens in the subscription above,
+  // not here, same as a real stroke: this just tells canvasApi it happened.
+  //
+  // Dismissing window.confirm() restores focus to the button that opened
+  // it, and since this one sits below a tall canvas, the browser's own
+  // scroll-focused-element-into-view behavior can shove the page down
+  // hundreds of pixels to do that -- scrolling the now-cleared canvas
+  // half off-screen. scrollIntoView pulls it back immediately after.
+  function handleClearCanvas() {
+    if (window.confirm('Clear the entire wall? This cannot be undone.')) {
+      clearCanvas();
+      document.getElementById('paintwall-canvas')?.scrollIntoView({ block: 'nearest' });
+    }
   }
 
   function handleInspectPixel({ x, y, clientX, clientY }) {
@@ -370,6 +395,7 @@ export function Wall() {
           </fieldset>
 
           <button type="button" id="save-wall-btn" onClick={handleSaveWall}>Save Wall</button>
+          <button type="button" id="clear-canvas-btn" onClick={handleClearCanvas}>Clear Canvas (Testing)</button>
         </div>
 
         {/* Mobile-only: reveal the palette/activity panels without scrolling the page */}
