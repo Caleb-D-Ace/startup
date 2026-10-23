@@ -18,6 +18,7 @@ import { useAuth } from '../AuthContext';
 const DEFAULT_BRUSH_SIZE = 5;
 const BRUSH_SHAPE = 'round'; // only shape implemented so far -- brush-style select below isn't wired to this yet
 const SUGGESTION_DEBOUNCE_MS = 400; // avoids firing a request per intermediate color while clicking around
+const ACTIVITY_FEED_LIMIT = 15; // most-recent-first, capped so a long session doesn't grow this list unboundedly
 
 export function Wall() {
   const { username } = useAuth();
@@ -109,19 +110,50 @@ export function Wall() {
   // counter is the actual change signal instead.
   const [pixelsVersion, setPixelsVersion] = useState(0);
 
+  // Distinct usernames seen this session (real strokes and simulated
+  // fake-peer ones alike), including yourself -- there's no real presence
+  // tracking in this mock (no join/leave, no real other clients), so this
+  // is deliberately simple: a monotonically-growing count of "who's shown
+  // up," not an attempt to fake accurate live join/leave dynamics.
+  const viewerUsernamesRef = useRef(new Set());
+  const [viewerCount, setViewerCount] = useState(0);
+  const [activityFeed, setActivityFeed] = useState([]);
+
+  // AuthContext resolves username asynchronously, so this can't just be a
+  // useRef lazy initializer -- re-seed whenever it actually changes.
+  useEffect(() => {
+    if (username && !viewerUsernamesRef.current.has(username)) {
+      viewerUsernamesRef.current.add(username);
+      setViewerCount(viewerUsernamesRef.current.size);
+    }
+  }, [username]);
+
   // Our own strokes flow through this same subscription rather than being
   // applied locally on submit -- treating "what I just painted" and "what a
   // peer just painted" identically keeps there from being two separate
   // code paths that could drift apart.
   useEffect(() => {
     const unsubscribe = subscribe((event) => {
-      if (event.type !== 'stroke') {
+      if (event.type === 'stroke') {
+        event.pixels.forEach(({ x, y, paletteIndex }) => {
+          pixelsRef.current.push({ x, y, paletteIndex });
+        });
+        setPixelsVersion((v) => v + 1);
         return;
       }
-      event.pixels.forEach(({ x, y, paletteIndex }) => {
-        pixelsRef.current.push({ x, y, paletteIndex });
-      });
-      setPixelsVersion((v) => v + 1);
+
+      if (event.type === 'activity') {
+        const newMessages = [];
+        if (!viewerUsernamesRef.current.has(event.username)) {
+          viewerUsernamesRef.current.add(event.username);
+          setViewerCount(viewerUsernamesRef.current.size);
+          newMessages.push(`${event.username} joined the wall`);
+        }
+        newMessages.push(event.message);
+        // "joined" reads naturally above "painted" for the same instant --
+        // not reversed, since newMessages is already built in that order.
+        setActivityFeed((prev) => [...newMessages, ...prev].slice(0, ACTIVITY_FEED_LIMIT));
+      }
     });
     return unsubscribe;
   }, []);
@@ -293,11 +325,13 @@ export function Wall() {
       {/* WebSocket data placeholder */}
       <section id="activity-section" className="panel">
         <h2>Live Activity</h2>
-        <p><span id="live-user-count">3</span> people are viewing the wall right now.</p>
+        <p><span id="live-user-count">{viewerCount}</span> people are viewing the wall right now.</p>
         <ul id="activity-feed">
-          <li>CalebD started painting a stroke near (120, 84)</li>
-          <li>Sarah finished a stroke at (300, 12)</li>
-          <li>anon_guest joined the wall</li>
+          {activityFeed.length === 0 ? (
+            <li>No activity yet &mdash; start painting!</li>
+          ) : (
+            activityFeed.map((message, index) => <li key={index}>{message}</li>)
+          )}
         </ul>
       </section>
     </>

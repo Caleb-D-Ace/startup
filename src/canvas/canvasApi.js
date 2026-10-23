@@ -91,6 +91,16 @@ const SIMULATION_INTERVAL_MS = 4000;
 const subscribers = new Set();
 let simulationTimer = null;
 
+// Caps how often a single username's painting generates an "activity"
+// notification -- a fast drag flushes a chunk every ~28px/250ms, which
+// would otherwise flood the live feed with one user's own repeated
+// "painted near" messages. In-memory only (not persisted), per username,
+// uncapped in size -- unlike the localStorage-backed per-user stores
+// elsewhere, a username here costs one Map entry (a string key + a
+// number), not worth a FIFO eviction scheme over.
+const ACTIVITY_THROTTLE_MS = 5000;
+const lastActivityAt = new Map(); // username -> timestamp of its last emitted activity notification
+
 // submitStroke runs on every chunk flush (every ~28px/250ms while
 // dragging), so re-parsing/re-serializing the *entire* grid on every call
 // scales with total session history, not with what's new. gridCache keeps
@@ -185,6 +195,24 @@ export function submitStroke(stroke) {
 
   scheduleSave();
   notify({ type: "stroke", pixels, username: stroke.username });
+
+  // One activity message per submission (so per chunk, not per whole drag)
+  // -- fires for every caller uniformly, real strokes and the simulated
+  // fake-peer stroke below alike, so there's a single place that decides
+  // what an activity message looks like instead of two. Throttled per
+  // username so one fast drag's many chunk flushes don't flood the feed
+  // with the same person's own messages; painting, persistence, and xp
+  // above are all unaffected by this -- only the notification is skipped.
+  if (pixels.length > 0) {
+    const now = Date.now();
+    const lastNotifiedAt = lastActivityAt.get(stroke.username) ?? 0;
+    if (now - lastNotifiedAt >= ACTIVITY_THROTTLE_MS) {
+      lastActivityAt.set(stroke.username, now);
+      const { x, y } = pixels[0];
+      notify({ type: "activity", username: stroke.username, message: `${stroke.username} painted near (${x}, ${y})` });
+    }
+  }
+
   return pixels;
 }
 
@@ -344,7 +372,7 @@ function paintFakeStroke() {
   const y = Math.floor(Math.random() * CANVAS_HEIGHT);
 
   submitStroke({ points: [{ x, y }], paletteIndex, username, shape: "round", size: 0 });
-  notify({ type: "activity", message: `${username} painted near (${x}, ${y})` });
+  // submitStroke itself emits the matching "activity" notification now.
 }
 
 function startSimulation() {
