@@ -29,11 +29,19 @@ export function Wall() {
 
   // Painting requires an identity to attribute it to -- logged-out visitors
   // get the selection tool only (pan/inspect, no drawing), regardless of
-  // whatever `tool` itself holds. Deliberately not a forced reset of `tool`
-  // on login/logout: a logged-in user's own tool choice survives a logout
-  // and comes right back once they log back in, instead of always
-  // snapping back to brush.
-  const effectiveTool = username ? 'brush' : 'selection';
+  // whatever `tool` itself holds.
+  const effectiveTool = username ? tool : 'selection';
+
+  // `tool` itself resets to 'brush' at the moment of login -- so painting
+  // is always immediately available right after logging in, not left
+  // wherever the selection tool happened to be from an earlier session.
+  // From there it behaves normally (switchable, preserved for the rest of
+  // the session) until the next login.
+  useEffect(() => {
+    if (username) {
+      setTool('brush');
+    }
+  }, [username]);
 
   // { hex, name }[] -- fetched from TheColorAPI, built around the current
   // brush color. null while loading (first load / mid-debounce), 'error'
