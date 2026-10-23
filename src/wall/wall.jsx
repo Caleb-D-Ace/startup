@@ -1,18 +1,74 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BrushColorControl, DEFAULT_BRUSH_COLOR } from '../canvas/BrushColorControl';
 import { PaintCanvas } from '../canvas/PaintCanvas';
-import { getCanvasState, getPixelOwner, subscribe, submitStroke, CANVAS_WIDTH, CANVAS_HEIGHT } from '../canvas/canvasApi';
+import {
+  getCanvasState,
+  getPixelOwner,
+  subscribe,
+  submitStroke,
+  paletteIndexToHex,
+  hexToPaletteIndex,
+  CANVAS_WIDTH,
+  CANVAS_HEIGHT,
+} from '../canvas/canvasApi';
 import { MIN_BRUSH_SIZE, MAX_BRUSH_SIZE } from '../canvas/brush';
+import { getColorSuggestions, jitterHex } from '../canvas/colorApi';
 import { useAuth } from '../AuthContext';
 
 const DEFAULT_BRUSH_SIZE = 5;
 const BRUSH_SHAPE = 'round'; // only shape implemented so far -- brush-style select below isn't wired to this yet
+const SUGGESTION_DEBOUNCE_MS = 400; // avoids firing a request per intermediate color while clicking around
 
 export function Wall() {
   const { username } = useAuth();
   const [brushColor, setBrushColor] = useState(DEFAULT_BRUSH_COLOR);
   const [brushSize, setBrushSize] = useState(DEFAULT_BRUSH_SIZE);
   const [tool, setTool] = useState('brush'); // 'brush' | 'hand'
+
+  // { hex, name }[] -- fetched from TheColorAPI, built around the current
+  // brush color. null while loading (first load / mid-debounce), 'error'
+  // sentinel string on failure so the UI can tell "still loading" from
+  // "the request actually failed" apart from a plain empty array.
+  const [colorSuggestions, setColorSuggestions] = useState(null);
+  const suggestionsRequestRef = useRef(0); // guards against a slow/older request overwriting a newer one
+
+  // Shared by the auto-fetch effect below and the refresh button -- fires
+  // one request for `hex` and applies the result only if nothing newer has
+  // started since (the request-id guard), so a slow/stale response can't
+  // clobber whatever's actually current.
+  function fetchSuggestions(hex) {
+    const requestId = ++suggestionsRequestRef.current;
+    setColorSuggestions(null);
+
+    getColorSuggestions(hex)
+      .then((colors) => {
+        if (requestId === suggestionsRequestRef.current) {
+          setColorSuggestions(colors);
+        }
+      })
+      .catch(() => {
+        if (requestId === suggestionsRequestRef.current) {
+          setColorSuggestions('error');
+        }
+      });
+  }
+
+  // Debounced and re-triggered on every brushColor change -- matches the
+  // toolbar copy's "based on the currently selected color." The debounce
+  // keeps clicking through several swatches quickly from firing a network
+  // request per intermediate color.
+  useEffect(() => {
+    const timer = setTimeout(() => fetchSuggestions(paletteIndexToHex(brushColor)), SUGGESTION_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [brushColor]);
+
+  // A scheme request is deterministic for a fixed hex -- re-asking for the
+  // same color's complement returns the identical result. jitterHex gives
+  // the refresh button something new to look at each click without
+  // actually changing the selected brush color.
+  function handleRefreshSuggestions() {
+    fetchSuggestions(jitterHex(paletteIndexToHex(brushColor)));
+  }
 
   // { x, y, clientX, clientY, owner } | null -- owner is whatever
   // getPixelOwner returned (null if that cell has never been painted).
@@ -57,6 +113,14 @@ export function Wall() {
   }, []);
 
   const brush = { shape: BRUSH_SHAPE, size: brushSize, paletteIndex: brushColor };
+
+  // Snaps the suggestion's arbitrary RGB onto the nearest real palette
+  // slot -- same hexToPaletteIndex a custom-picker pick or a quick swatch
+  // resolves through, so adopting a suggestion is the exact same kind of
+  // selection as any other color pick.
+  function handleSelectSuggestion(hex) {
+    setBrushColor(hexToPaletteIndex(hex));
+  }
 
   function handleStrokeChunk(chunk) {
     submitStroke({ ...chunk, username: username ?? 'anon_guest' });
@@ -163,13 +227,36 @@ export function Wall() {
             <p>
               Complementary colors pulled from the
               <a href="https://www.thecolorapi.com/" target="_blank" rel="noopener">TheColorAPI</a>
-              third party service will be listed here based on the currently selected color.
+              third party service, based on the currently selected color. Click one to paint with it.
             </p>
-            <ul id="palette-suggestions">
-              <li>#3B7DDD (placeholder)</li>
-              <li>#DD9F3B (placeholder)</li>
-              <li>#3BDDA0 (placeholder)</li>
-            </ul>
+            <button
+              type="button"
+              id="refresh-suggestions-btn"
+              onClick={handleRefreshSuggestions}
+              disabled={colorSuggestions === null}
+            >
+              Refresh suggestions
+            </button>
+            {colorSuggestions === 'error' ? (
+              <p className="palette-suggestions-status">Couldn&apos;t reach TheColorAPI -- try again in a moment.</p>
+            ) : colorSuggestions === null ? (
+              <p className="palette-suggestions-status">Loading suggestions&hellip;</p>
+            ) : (
+              <ul id="palette-suggestions">
+                {colorSuggestions.map((color) => (
+                  <li key={color.hex}>
+                    <button
+                      type="button"
+                      className="swatch suggested-color-btn"
+                      style={{ backgroundColor: color.hex }}
+                      onClick={() => handleSelectSuggestion(color.hex)}
+                      aria-label={`Use ${color.name}, ${color.hex}`}
+                    />
+                    <span>{color.name} ({color.hex})</span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </fieldset>
 
           <button type="button" id="save-wall-btn">Save Wall</button>

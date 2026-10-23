@@ -517,6 +517,25 @@ main {
   border-radius: var(--radius);
 }
 
+#palette-suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  list-style: none;
+  padding: 0;
+}
+
+#palette-suggestions li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.palette-suggestions-status {
+  font-style: italic;
+  color: var(--color-muted, inherit);
+}
+
 /* BrushColorControl: quick swatches arrayed on one line (reuses
    .color-swatches/.swatch as-is), plus a bigger/outlined first swatch --
    promoteToFront always keeps the currently-selected color there. */
