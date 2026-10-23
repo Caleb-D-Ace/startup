@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../AuthContext';
-import { BrushColorControl, DEFAULT_BRUSH_COLOR } from '../BrushColorControl';
-import { PaintCanvas } from '../PaintCanvas';
-import { loadAvatar, saveAvatar } from '../canvasApi';
-import { rasterizeStroke, MIN_BRUSH_SIZE, MAX_BRUSH_SIZE } from '../brush';
+import { BrushColorControl, DEFAULT_BRUSH_COLOR } from '../canvas/BrushColorControl';
+import { PaintCanvas } from '../canvas/PaintCanvas';
+import { loadAvatar, saveAvatar } from '../canvas/canvasApi';
+import { rasterizeStroke, MIN_BRUSH_SIZE, MAX_BRUSH_SIZE } from '../canvas/brush';
 
 const DEFAULT_BRUSH_SIZE = 5;
 const BRUSH_SHAPE = 'round'; // only shape implemented so far -- avatar-brush-style select below isn't wired to this yet

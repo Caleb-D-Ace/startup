@@ -15,13 +15,12 @@
 //
 // Two tools: 'brush' paints (the above). 'hand' doesn't paint at all -- a
 // short tap reports onInspectPixel, a drag pans. Pointer Events (not mouse
-// events) are what make this work on touch at all: a plain mouse handler
-// doesn't reliably fire for touch drags, so there'd be no way to
-// distinguish a pan gesture from a tap on a touchscreen otherwise. The two
-// tools also set touch-action oppositely -- 'none' for brush (so the
-// browser doesn't try to scroll the page out from under a paint-drag),
-// 'auto' for hand (so a touch-drag gets native scrolling for free; mouse
-// drags get scrolled manually since plain drag doesn't scroll natively).
+// events) unify mouse/touch/pen through one set of handlers, which is what
+// makes touch panning possible at all. touch-action is set oppositely per
+// tool -- 'none' for brush (so the browser doesn't fight a paint-drag for
+// the gesture), 'auto' for hand (touch gets native scrolling for free;
+// mouse drags are scrolled manually below, since plain drag doesn't
+// scroll a div on its own).
 
 import React, { useRef, useEffect } from 'react';
 import { interpolatePoints, CHUNK_DISTANCE_PX, CHUNK_TIME_MS } from './brush';
@@ -173,10 +172,6 @@ export function PaintCanvas({ id, width, height, pixels, pixelsVersion, brush, t
         }
       }
 
-      // Manual scroll for mouse/pen -- a plain drag doesn't scroll a div on
-      // its own the way a touch drag does natively (which this leaves
-      // alone entirely, since touch-action: auto on the hand tool lets the
-      // browser handle that itself without any JS involved).
       if (pan.moved && pan.scrollEl) {
         pan.scrollEl.scrollLeft -= event.clientX - pan.lastClientX;
         pan.scrollEl.scrollTop -= event.clientY - pan.lastClientY;

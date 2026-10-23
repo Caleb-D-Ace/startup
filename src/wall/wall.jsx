@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { BrushColorControl, DEFAULT_BRUSH_COLOR } from '../BrushColorControl';
-import { PaintCanvas } from '../PaintCanvas';
-import { getCanvasState, getPixelOwner, subscribe, submitStroke, CANVAS_WIDTH, CANVAS_HEIGHT } from '../canvasApi';
-import { MIN_BRUSH_SIZE, MAX_BRUSH_SIZE } from '../brush';
+import { BrushColorControl, DEFAULT_BRUSH_COLOR } from '../canvas/BrushColorControl';
+import { PaintCanvas } from '../canvas/PaintCanvas';
+import { getCanvasState, getPixelOwner, subscribe, submitStroke, CANVAS_WIDTH, CANVAS_HEIGHT } from '../canvas/canvasApi';
+import { MIN_BRUSH_SIZE, MAX_BRUSH_SIZE } from '../canvas/brush';
 import { useAuth } from '../AuthContext';
 
 const DEFAULT_BRUSH_SIZE = 5;

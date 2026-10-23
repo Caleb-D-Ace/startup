@@ -23,9 +23,7 @@ export function AuthProvider({ children }) {
       localStorage.setItem('paintwall-username', name);
     } catch {
       // localStorage full or unavailable -- fine for a mock, login just
-      // won't persist across a reload. Matters in practice: a canvas-heavy
-      // session can fill the quota, and without this, that same full quota
-      // would throw here and silently stop login from working at all.
+      // won't persist across a reload.
     }
     setUsername(name);
   }

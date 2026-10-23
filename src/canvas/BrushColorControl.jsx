@@ -16,7 +16,7 @@
 import React, { useState, useEffect } from 'react';
 import { saveQuickSwatches, loadQuickSwatches, paletteIndexToHex } from './canvasApi';
 import { ColorPalettePicker } from './ColorPalettePicker';
-import { useAuth } from './AuthContext';
+import { useAuth } from '../AuthContext';
 
 const QUICK_SWATCH_COUNT = 9; // + 1 fixed "Custom color..." slot = 10 shown
 const NARROW_BREAKPOINT_PX = 640; // matches app.css's existing 40rem toolbar tier
