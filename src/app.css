@@ -480,11 +480,16 @@ main {
   gap: 1rem;
 }
 
-/* Extra breathing room (beyond the normal 1rem gap) between the Brush/Hand
-   toggle and the Style/Color/Size group, to separate them visually without
-   pushing either group to the container's edge. */
+/* Extra breathing room (beyond the normal 1rem gap) between the Brush/
+   Selection toggle and the Style/Color/Size group, to separate them
+   visually without pushing either group to the container's edge. */
 .toolbar-push {
   margin-left: 1.5rem;
+}
+
+#login-to-draw-prompt {
+  margin: 0;
+  font-weight: 600;
 }
 
 #tool-select {
@@ -665,7 +670,7 @@ main {
   border-radius: var(--radius);
 }
 
-/* Wall's hand-tool click-to-inspect popover -- unlike .speech-bubble, this
+/* Wall's selection-tool click-to-inspect popover -- unlike .speech-bubble, this
    isn't anchored to a fixed toolbar trigger, it's anchored to wherever on
    the canvas the user tapped (via inline left/top from the tap's clientX/
    clientY), so it skips the directional tail entirely and just reuses

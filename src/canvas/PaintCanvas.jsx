@@ -13,20 +13,20 @@
 // with the previous chunk's last point, so two independently-rasterized
 // chunks still connect with no seam.
 //
-// Two tools: 'brush' paints (the above). 'hand' doesn't paint at all -- a
-// short tap reports onInspectPixel, a drag pans. Pointer Events (not mouse
-// events) unify mouse/touch/pen through one set of handlers, which is what
-// makes touch panning possible at all. touch-action is set oppositely per
-// tool -- 'none' for brush (so the browser doesn't fight a paint-drag for
-// the gesture), 'auto' for hand (touch gets native scrolling for free;
-// mouse drags are scrolled manually below, since plain drag doesn't
+// Two tools: 'brush' paints (the above). 'selection' doesn't paint at all --
+// a short tap reports onInspectPixel, a drag pans. Pointer Events (not
+// mouse events) unify mouse/touch/pen through one set of handlers, which is
+// what makes touch panning possible at all. touch-action is set oppositely
+// per tool -- 'none' for brush (so the browser doesn't fight a paint-drag
+// for the gesture), 'auto' for selection (touch gets native scrolling for
+// free; mouse drags are scrolled manually below, since plain drag doesn't
 // scroll a div on its own).
 
 import React, { useRef, useEffect } from 'react';
 import { interpolatePoints, CHUNK_DISTANCE_PX, CHUNK_TIME_MS } from './brush';
 import { paletteIndexToHex } from './canvasApi';
 
-const HAND_DRAG_THRESHOLD_PX = 6; // client (screen) px -- below this, a hand-tool pointer-up counts as a tap, not a pan
+const SELECTION_DRAG_THRESHOLD_PX = 6; // client (screen) px -- below this, a selection-tool pointer-up counts as a tap, not a pan
 
 /**
  * Fills `pixels[startIndex:]` onto `ctx`, one fillRect per pixel. Shared by
@@ -64,10 +64,10 @@ export function drawPixels(ctx, pixels, startIndex = 0) {
  *   in place by the parent, not replaced), so this is the actual change
  *   signal -- React wouldn't otherwise notice anything happened.
  * @param {{shape:string, size:number, paletteIndex:number}} brush - current tool config
- * @param {'brush'|'hand'} [tool] - defaults to 'brush'.
+ * @param {'brush'|'selection'} [tool] - defaults to 'brush'.
  * @param {(chunk: {points:{x:number,y:number}[], shape:string, size:number, paletteIndex:number}) => void} onStrokeChunk
  * @param {(point: {x:number,y:number,clientX:number,clientY:number}) => void} [onInspectPixel] -
- *   fires on a tap (not a drag) while tool === 'hand'. clientX/clientY (the
+ *   fires on a tap (not a drag) while tool === 'selection'. clientX/clientY (the
  *   tap's viewport position) are included so the caller can anchor a
  *   popover there without having to re-derive it.
  * @param {React.ReactNode} [children] - fallback content for browsers without canvas support
@@ -81,8 +81,8 @@ export function PaintCanvas({ id, width, height, pixels, pixelsVersion, brush, t
   // shouldn't itself count as new content worth flushing.
   const strokeRef = useRef(null); // { lastPoint, pendingPoints, newPointCount, distanceSinceFlush, lastFlushTime }
 
-  // Hand-tool drag state -- separate from strokeRef since brush and hand
-  // never run at the same time, but have no state shape in common.
+  // Selection-tool drag state -- separate from strokeRef since brush and
+  // selection never run at the same time, but have no state shape in common.
   const panRef = useRef(null); // { startClientX, startClientY, lastClientX, lastClientY, scrollEl, moved }
 
   const drawnCountRef = useRef(0);
@@ -157,7 +157,7 @@ export function PaintCanvas({ id, width, height, pixels, pixelsVersion, brush, t
   }
 
   function handlePointerDown(event) {
-    if (tool === 'hand') {
+    if (tool === 'selection') {
       panRef.current = {
         startClientX: event.clientX,
         startClientY: event.clientY,
@@ -181,7 +181,7 @@ export function PaintCanvas({ id, width, height, pixels, pixelsVersion, brush, t
   }
 
   function handlePointerMove(event) {
-    if (tool === 'hand') {
+    if (tool === 'selection') {
       const pan = panRef.current;
       if (!pan) {
         return;
@@ -190,7 +190,7 @@ export function PaintCanvas({ id, width, height, pixels, pixelsVersion, brush, t
       if (!pan.moved) {
         const totalDx = event.clientX - pan.startClientX;
         const totalDy = event.clientY - pan.startClientY;
-        if (Math.hypot(totalDx, totalDy) > HAND_DRAG_THRESHOLD_PX) {
+        if (Math.hypot(totalDx, totalDy) > SELECTION_DRAG_THRESHOLD_PX) {
           pan.moved = true;
         }
       }
@@ -233,7 +233,7 @@ export function PaintCanvas({ id, width, height, pixels, pixelsVersion, brush, t
   }
 
   function handlePointerUp(event) {
-    if (tool === 'hand') {
+    if (tool === 'selection') {
       const pan = panRef.current;
       panRef.current = null;
       if (pan && !pan.moved && onInspectPixel) {
@@ -256,7 +256,7 @@ export function PaintCanvas({ id, width, height, pixels, pixelsVersion, brush, t
       ref={canvasRef}
       width={width}
       height={height}
-      style={{ touchAction: tool === 'hand' ? 'auto' : 'none' }}
+      style={{ touchAction: tool === 'selection' ? 'auto' : 'none' }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}

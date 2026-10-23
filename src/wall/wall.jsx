@@ -25,7 +25,15 @@ export function Wall() {
   const { username } = useAuth();
   const [brushColor, setBrushColor] = useState(DEFAULT_BRUSH_COLOR);
   const [brushSize, setBrushSize] = useState(DEFAULT_BRUSH_SIZE);
-  const [tool, setTool] = useState('brush'); // 'brush' | 'hand'
+  const [tool, setTool] = useState('brush'); // 'brush' | 'selection'
+
+  // Painting requires an identity to attribute it to -- logged-out visitors
+  // get the selection tool only (pan/inspect, no drawing), regardless of
+  // whatever `tool` itself holds. Deliberately not a forced reset of `tool`
+  // on login/logout: a logged-in user's own tool choice survives a logout
+  // and comes right back once they log back in, instead of always
+  // snapping back to brush.
+  const effectiveTool = username ? 'brush' : 'selection';
 
   // { hex, name }[] -- fetched from TheColorAPI, built around the current
   // brush color. null while loading (first load / mid-debounce), 'error'
@@ -284,7 +292,7 @@ export function Wall() {
             pixels={pixelsRef.current}
             pixelsVersion={pixelsVersion}
             brush={brush}
-            tool={tool}
+            tool={effectiveTool}
             onStrokeChunk={handleStrokeChunk}
             onInspectPixel={handleInspectPixel}
           >
@@ -317,42 +325,53 @@ export function Wall() {
           <h3>Drawing Tools</h3>
 
           <div className="toolbar-controls">
-            <div id="tool-select" role="group" aria-label="Tool">
-              <button type="button" id="brush-tool-btn" aria-pressed={tool === 'brush'} onClick={() => setTool('brush')}>
-                Brush
-              </button>
-              <button type="button" id="hand-tool-btn" aria-pressed={tool === 'hand'} onClick={() => setTool('hand')}>
-                Hand
-              </button>
-            </div>
+            {username ? (
+              <>
+                <div id="tool-select" role="group" aria-label="Tool">
+                  <button type="button" id="brush-tool-btn" aria-pressed={tool === 'brush'} onClick={() => setTool('brush')}>
+                    Brush
+                  </button>
+                  <button
+                    type="button"
+                    id="selection-tool-btn"
+                    aria-pressed={tool === 'selection'}
+                    onClick={() => setTool('selection')}
+                  >
+                    Selection
+                  </button>
+                </div>
 
-            <div className="field toolbar-push">
-              <label htmlFor="brush-style">Brush style</label>
-              <select id="brush-style" name="brush-style">
-                <option value="round">Round</option>
-                <option value="square">Square</option>
-                <option value="spray">Spray</option>
-                <option value="calligraphy">Calligraphy</option>
-              </select>
-            </div>
+                <div className="field toolbar-push">
+                  <label htmlFor="brush-style">Brush style</label>
+                  <select id="brush-style" name="brush-style">
+                    <option value="round">Round</option>
+                    <option value="square">Square</option>
+                    <option value="spray">Spray</option>
+                    <option value="calligraphy">Calligraphy</option>
+                  </select>
+                </div>
 
-            <div className="field">
-              <label htmlFor="brush-size">Brush size</label>
-              <input
-                type="range"
-                id="brush-size"
-                name="brush-size"
-                min={MIN_BRUSH_SIZE}
-                max={MAX_BRUSH_SIZE}
-                value={brushSize}
-                onChange={(event) => setBrushSize(Number(event.target.value))}
-              />
-            </div>
+                <div className="field">
+                  <label htmlFor="brush-size">Brush size</label>
+                  <input
+                    type="range"
+                    id="brush-size"
+                    name="brush-size"
+                    min={MIN_BRUSH_SIZE}
+                    max={MAX_BRUSH_SIZE}
+                    value={brushSize}
+                    onChange={(event) => setBrushSize(Number(event.target.value))}
+                  />
+                </div>
 
-            <div className="field">
-              <label id="color-picker-label">Brush color</label>
-              <BrushColorControl selectedIndex={brushColor} onSelect={setBrushColor} />
-            </div>
+                <div className="field">
+                  <label id="color-picker-label">Brush color</label>
+                  <BrushColorControl selectedIndex={brushColor} onSelect={setBrushColor} />
+                </div>
+              </>
+            ) : (
+              <p id="login-to-draw-prompt">Log in to begin drawing!</p>
+            )}
           </div>
 
           <fieldset id="palette-fieldset">
