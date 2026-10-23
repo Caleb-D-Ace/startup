@@ -12,10 +12,22 @@
 // flush on mouseup for whatever's left over. Each chunk's point list starts
 // with the previous chunk's last point, so two independently-rasterized
 // chunks still connect with no seam.
+//
+// Two tools: 'brush' paints (the above). 'hand' doesn't paint at all -- a
+// short tap reports onInspectPixel, a drag pans. Pointer Events (not mouse
+// events) are what make this work on touch at all: a plain mouse handler
+// doesn't reliably fire for touch drags, so there'd be no way to
+// distinguish a pan gesture from a tap on a touchscreen otherwise. The two
+// tools also set touch-action oppositely -- 'none' for brush (so the
+// browser doesn't try to scroll the page out from under a paint-drag),
+// 'auto' for hand (so a touch-drag gets native scrolling for free; mouse
+// drags get scrolled manually since plain drag doesn't scroll natively).
 
 import React, { useRef, useEffect } from 'react';
 import { interpolatePoints, CHUNK_DISTANCE_PX, CHUNK_TIME_MS } from './brush';
 import { paletteIndexToHex } from './canvasApi';
+
+const HAND_DRAG_THRESHOLD_PX = 6; // client (screen) px -- below this, a hand-tool pointer-up counts as a tap, not a pan
 
 /**
  * @param {string} [id] - forwarded to the underlying <canvas>, so existing
@@ -33,10 +45,15 @@ import { paletteIndexToHex } from './canvasApi';
  *   in place by the parent, not replaced), so this is the actual change
  *   signal -- React wouldn't otherwise notice anything happened.
  * @param {{shape:string, size:number, paletteIndex:number}} brush - current tool config
+ * @param {'brush'|'hand'} [tool] - defaults to 'brush'.
  * @param {(chunk: {points:{x:number,y:number}[], shape:string, size:number, paletteIndex:number}) => void} onStrokeChunk
+ * @param {(point: {x:number,y:number,clientX:number,clientY:number}) => void} [onInspectPixel] -
+ *   fires on a tap (not a drag) while tool === 'hand'. clientX/clientY (the
+ *   tap's viewport position) are included so the caller can anchor a
+ *   popover there without having to re-derive it.
  * @param {React.ReactNode} [children] - fallback content for browsers without canvas support
  */
-export function PaintCanvas({ id, width, height, pixels, pixelsVersion, brush, onStrokeChunk, children }) {
+export function PaintCanvas({ id, width, height, pixels, pixelsVersion, brush, tool = 'brush', onStrokeChunk, onInspectPixel, children }) {
   const canvasRef = useRef(null);
 
   // In-progress drag state, kept out of useState since it's never rendered
@@ -44,6 +61,10 @@ export function PaintCanvas({ id, width, height, pixels, pixelsVersion, brush, o
   // because pendingPoints carries over a seam point after each flush, which
   // shouldn't itself count as new content worth flushing.
   const strokeRef = useRef(null); // { lastPoint, pendingPoints, newPointCount, distanceSinceFlush, lastFlushTime }
+
+  // Hand-tool drag state -- separate from strokeRef since brush and hand
+  // never run at the same time, but have no state shape in common.
+  const panRef = useRef(null); // { startClientX, startClientY, lastClientX, lastClientY, scrollEl, moved }
 
   const drawnCountRef = useRef(0);
 
@@ -113,7 +134,19 @@ export function PaintCanvas({ id, width, height, pixels, pixelsVersion, brush, o
     stroke.lastFlushTime = Date.now();
   }
 
-  function handleMouseDown(event) {
+  function handlePointerDown(event) {
+    if (tool === 'hand') {
+      panRef.current = {
+        startClientX: event.clientX,
+        startClientY: event.clientY,
+        lastClientX: event.clientX,
+        lastClientY: event.clientY,
+        scrollEl: canvasRef.current.closest('.canvas-scroll'),
+        moved: false,
+      };
+      return;
+    }
+
     const point = canvasPointFromEvent(event);
     strokeRef.current = {
       lastPoint: point,
@@ -125,7 +158,34 @@ export function PaintCanvas({ id, width, height, pixels, pixelsVersion, brush, o
     drawDabs([point]);
   }
 
-  function handleMouseMove(event) {
+  function handlePointerMove(event) {
+    if (tool === 'hand') {
+      const pan = panRef.current;
+      if (!pan) {
+        return;
+      }
+
+      if (!pan.moved) {
+        const totalDx = event.clientX - pan.startClientX;
+        const totalDy = event.clientY - pan.startClientY;
+        if (Math.hypot(totalDx, totalDy) > HAND_DRAG_THRESHOLD_PX) {
+          pan.moved = true;
+        }
+      }
+
+      // Manual scroll for mouse/pen -- a plain drag doesn't scroll a div on
+      // its own the way a touch drag does natively (which this leaves
+      // alone entirely, since touch-action: auto on the hand tool lets the
+      // browser handle that itself without any JS involved).
+      if (pan.moved && pan.scrollEl) {
+        pan.scrollEl.scrollLeft -= event.clientX - pan.lastClientX;
+        pan.scrollEl.scrollTop -= event.clientY - pan.lastClientY;
+      }
+      pan.lastClientX = event.clientX;
+      pan.lastClientY = event.clientY;
+      return;
+    }
+
     const stroke = strokeRef.current;
     if (!stroke) {
       return;
@@ -154,7 +214,17 @@ export function PaintCanvas({ id, width, height, pixels, pixelsVersion, brush, o
     }
   }
 
-  function handleMouseUp() {
+  function handlePointerUp(event) {
+    if (tool === 'hand') {
+      const pan = panRef.current;
+      panRef.current = null;
+      if (pan && !pan.moved && onInspectPixel) {
+        const point = canvasPointFromEvent(event);
+        onInspectPixel({ x: point.x, y: point.y, clientX: event.clientX, clientY: event.clientY });
+      }
+      return;
+    }
+
     if (!strokeRef.current) {
       return;
     }
@@ -168,10 +238,11 @@ export function PaintCanvas({ id, width, height, pixels, pixelsVersion, brush, o
       ref={canvasRef}
       width={width}
       height={height}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
+      style={{ touchAction: tool === 'hand' ? 'auto' : 'none' }}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerLeave={handlePointerUp}
     >
       {children}
     </canvas>

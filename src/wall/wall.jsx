@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BrushColorControl, DEFAULT_BRUSH_COLOR } from '../BrushColorControl';
 import { PaintCanvas } from '../PaintCanvas';
-import { getCanvasState, subscribe, submitStroke, CANVAS_WIDTH, CANVAS_HEIGHT } from '../canvasApi';
+import { getCanvasState, getPixelOwner, subscribe, submitStroke, CANVAS_WIDTH, CANVAS_HEIGHT } from '../canvasApi';
 import { MIN_BRUSH_SIZE, MAX_BRUSH_SIZE } from '../brush';
 import { useAuth } from '../AuthContext';
 
@@ -12,6 +12,12 @@ export function Wall() {
   const { username } = useAuth();
   const [brushColor, setBrushColor] = useState(DEFAULT_BRUSH_COLOR);
   const [brushSize, setBrushSize] = useState(DEFAULT_BRUSH_SIZE);
+  const [tool, setTool] = useState('brush'); // 'brush' | 'hand'
+
+  // { x, y, clientX, clientY, owner } | null -- owner is whatever
+  // getPixelOwner returned (null if that cell has never been painted).
+  // clientX/clientY position the popover; see PaintCanvas's onInspectPixel.
+  const [inspectedPixel, setInspectedPixel] = useState(null);
 
   // Held in a ref, mutated in place via push(), rather than React state --
   // a chunk commits every ~28px/250ms while dragging, and rebuilding this
@@ -56,6 +62,14 @@ export function Wall() {
     submitStroke({ ...chunk, username: username ?? 'anon_guest' });
   }
 
+  function handleInspectPixel({ x, y, clientX, clientY }) {
+    setInspectedPixel({ x, y, clientX, clientY, owner: getPixelOwner(x, y) });
+  }
+
+  function handleCloseInspector() {
+    setInspectedPixel(null);
+  }
+
   return (
     <>
       {/* Application data placeholder: the live shared canvas */}
@@ -73,20 +87,46 @@ export function Wall() {
             pixels={pixelsRef.current}
             pixelsVersion={pixelsVersion}
             brush={brush}
+            tool={tool}
             onStrokeChunk={handleStrokeChunk}
+            onInspectPixel={handleInspectPixel}
           >
             Your browser does not support the canvas element. This is where the shared pixel
             wall will be rendered.
           </PaintCanvas>
         </div>
 
+        {inspectedPixel && (
+          <>
+            <div className="bubble-backdrop" onClick={handleCloseInspector}></div>
+            <div className="pixel-inspector" style={{ left: inspectedPixel.clientX + 12, top: inspectedPixel.clientY + 12 }}>
+              <button type="button" className="bubble-close-btn" aria-label="Close" onClick={handleCloseInspector}>
+                &times;
+              </button>
+              {inspectedPixel.owner ? (
+                <p>
+                  Painted by <strong>{inspectedPixel.owner.username}</strong>
+                  <br />
+                  {new Date(inspectedPixel.owner.paintedAt).toLocaleString()}
+                </p>
+              ) : (
+                <p>This pixel hasn&apos;t been painted yet.</p>
+              )}
+            </div>
+          </>
+        )}
+
         <div id="toolbar" className="toolbar">
           <h3>Drawing Tools</h3>
 
           <div className="toolbar-controls">
             <div id="tool-select" role="group" aria-label="Tool">
-              <button type="button" id="brush-tool-btn" aria-pressed="true">Brush</button>
-              <button type="button" id="hand-tool-btn" aria-pressed="false">Hand</button>
+              <button type="button" id="brush-tool-btn" aria-pressed={tool === 'brush'} onClick={() => setTool('brush')}>
+                Brush
+              </button>
+              <button type="button" id="hand-tool-btn" aria-pressed={tool === 'hand'} onClick={() => setTool('hand')}>
+                Hand
+              </button>
             </div>
 
             <div className="field toolbar-push">

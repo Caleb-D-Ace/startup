@@ -12,7 +12,7 @@ export const CHUNK_TIME_MS = 250; // ...or after this much time, whichever comes
 // MAX caps a single dab at 100px across so one stroke can't blot out a
 // large area of the shared wall in an instant.
 export const MIN_BRUSH_SIZE = 2;
-export const MAX_BRUSH_SIZE = 50;
+export const MAX_BRUSH_SIZE = 40;
 
 /**
  * The set of {x, y} canvas-pixel cells one brush dab covers, centered at

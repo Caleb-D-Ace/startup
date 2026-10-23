@@ -7,17 +7,19 @@
 // see the README's Canvas API plan -- so swapping the internals out later
 // shouldn't require touching any component that calls it.
 //
-// Simplification vs. that plan: the real backend stores a dense 1280x720
-// grid as packed binary and keys pixels by a numeric user ID. This mock
-// stores only the *painted* pixels, sparsely, keyed by "x,y", with the
-// plain username string attached directly -- there's no real DB yet to
-// assign numeric IDs from, and a sparse map is what actually fits in
-// localStorage's ~5MB quota for a grid this size.
+// Simplification vs. that plan: the real backend stores a dense grid as
+// packed binary and keys pixels by a numeric user ID. This mock stores only
+// the *painted* pixels, sparsely, keyed by "x,y", with the plain username
+// string attached directly -- there's no real DB yet to assign numeric IDs
+// from, and a sparse map is what actually fits in localStorage's ~5MB
+// quota (480p rather than 720p specifically because painting pixel
+// ownership in, which is coming next, means attribution data -- not just
+// color -- now has to survive in that same quota).
 
 import { rasterizeStroke } from "./brush";
 
-export const CANVAS_WIDTH = 1280;
-export const CANVAS_HEIGHT = 720;
+export const CANVAS_WIDTH = 854;
+export const CANVAS_HEIGHT = 480;
 
 // ---- The 256-color palette (true "8-bit color") -------------------------
 // 3 bits red, 3 bits green, 2 bits blue -- 8x8x4 = exactly 256 values, the
