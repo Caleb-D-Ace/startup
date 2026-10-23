@@ -88,6 +88,13 @@ const AVATAR_STORAGE_KEY_PREFIX = "paintwall-avatar-";
 const FAKE_USERNAMES = ["Sarah", "anon_guest", "Markiploer", "thy_mother", "Gryffindor"];
 const SIMULATION_INTERVAL_MS = 4000;
 
+// Confined to a corner rather than scattered across the whole canvas, so
+// simulated activity doesn't visually clutter actual painted artwork (e.g.
+// in an exported/graded screenshot) -- fractions of CANVAS_WIDTH/HEIGHT
+// rather than fixed pixel sizes so this stays "a corner" if those change.
+const FAKE_ACTIVITY_REGION_WIDTH = Math.round(CANVAS_WIDTH * 0.2);
+const FAKE_ACTIVITY_REGION_HEIGHT = Math.round(CANVAS_HEIGHT * 0.2);
+
 const subscribers = new Set();
 let simulationTimer = null;
 
@@ -364,8 +371,8 @@ export function getLeaderboard() {
 function paintFakeStroke() {
   const username = FAKE_USERNAMES[Math.floor(Math.random() * FAKE_USERNAMES.length)];
   const paletteIndex = Math.floor(Math.random() * PALETTE.length);
-  const x = Math.floor(Math.random() * CANVAS_WIDTH);
-  const y = Math.floor(Math.random() * CANVAS_HEIGHT);
+  const x = CANVAS_WIDTH - FAKE_ACTIVITY_REGION_WIDTH + Math.floor(Math.random() * FAKE_ACTIVITY_REGION_WIDTH);
+  const y = Math.floor(Math.random() * FAKE_ACTIVITY_REGION_HEIGHT);
 
   submitStroke({ points: [{ x, y }], paletteIndex, username, shape: "round", size: 0 });
   // submitStroke itself emits the matching "activity" notification now.

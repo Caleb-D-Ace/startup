@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BrushColorControl, DEFAULT_BRUSH_COLOR } from '../canvas/BrushColorControl';
-import { PaintCanvas } from '../canvas/PaintCanvas';
+import { PaintCanvas, drawPixels } from '../canvas/PaintCanvas';
 import {
   getCanvasState,
   getPixelOwner,
@@ -180,6 +180,68 @@ export function Wall() {
     setInspectedPixel(null);
   }
 
+  // Exports from pixelsRef.current directly, not PaintCanvas's live DOM
+  // canvas -- keeps PaintCanvas's "I just render what I'm given" contract
+  // intact (no reaching into it via a forwarded ref), and it's the same
+  // authoritative data either way. Built on a detached canvas (never
+  // attached to the DOM -- not required for drawing or export) rather than
+  // the real one so this can't interfere with whatever's on screen.
+  async function handleSaveWall() {
+    const exportCanvas = document.createElement('canvas');
+    exportCanvas.width = CANVAS_WIDTH;
+    exportCanvas.height = CANVAS_HEIGHT;
+    const ctx = exportCanvas.getContext('2d');
+
+    // JPEG has no alpha channel -- without an opaque fill first, every
+    // never-painted pixel would otherwise come out black instead of blank.
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    drawPixels(ctx, pixelsRef.current);
+
+    const pad = (n) => String(n).padStart(2, '0');
+    const now = new Date();
+    const timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+    const filename = `Paintwall-${timestamp}.jpg`;
+
+    exportCanvas.toBlob(async (blob) => {
+      if (!blob) {
+        return;
+      }
+
+      // Chromium-only: the actual "choose where to save" file picker.
+      // Firefox/Safari don't implement it at all, so this falls back to a
+      // plain download link there -- that always goes wherever the
+      // browser's own download setting points, which a webpage can't
+      // override.
+      if (window.showSaveFilePicker) {
+        try {
+          const handle = await window.showSaveFilePicker({
+            suggestedName: filename,
+            types: [{ description: 'JPEG image', accept: { 'image/jpeg': ['.jpg'] } }],
+          });
+          const writable = await handle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') {
+            return; // user cancelled the save dialog -- not a failure
+          }
+          // fall through to the standard download below
+        }
+      }
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }, 'image/jpeg', 0.92);
+  }
+
   return (
     <>
       {/* Application data placeholder: the live shared canvas */}
@@ -307,7 +369,7 @@ export function Wall() {
             </div>
           </fieldset>
 
-          <button type="button" id="save-wall-btn">Save Wall</button>
+          <button type="button" id="save-wall-btn" onClick={handleSaveWall}>Save Wall</button>
         </div>
 
         {/* Mobile-only: reveal the palette/activity panels without scrolling the page */}

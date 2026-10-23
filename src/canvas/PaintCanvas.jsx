@@ -29,6 +29,23 @@ import { paletteIndexToHex } from './canvasApi';
 const HAND_DRAG_THRESHOLD_PX = 6; // client (screen) px -- below this, a hand-tool pointer-up counts as a tap, not a pan
 
 /**
+ * Fills `pixels[startIndex:]` onto `ctx`, one fillRect per pixel. Shared by
+ * this component's own committed-pixel redraw and Wall.jsx's "Save Wall"
+ * JPG export, so there's one definition of "what a pixel list actually
+ * looks like drawn out" instead of two.
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {{x:number,y:number,paletteIndex:number}[]} pixels
+ * @param {number} [startIndex] - defaults to 0 (draw everything)
+ */
+export function drawPixels(ctx, pixels, startIndex = 0) {
+  for (let i = startIndex; i < pixels.length; i++) {
+    const { x, y, paletteIndex } = pixels[i];
+    ctx.fillStyle = paletteIndexToHex(paletteIndex);
+    ctx.fillRect(x, y, 1, 1);
+  }
+}
+
+/**
  * @param {string} [id] - forwarded to the underlying <canvas>, so existing
  *   CSS targeting a specific canvas by id keeps working.
  * @param {number} width - canvas backing width, in pixels
@@ -69,11 +86,7 @@ export function PaintCanvas({ id, width, height, pixels, pixelsVersion, brush, t
 
   useEffect(() => {
     const ctx = canvasRef.current.getContext('2d');
-    for (let i = drawnCountRef.current; i < pixels.length; i++) {
-      const { x, y, paletteIndex } = pixels[i];
-      ctx.fillStyle = paletteIndexToHex(paletteIndex);
-      ctx.fillRect(x, y, 1, 1);
-    }
+    drawPixels(ctx, pixels, drawnCountRef.current);
     drawnCountRef.current = pixels.length;
     // pixels is a stable, mutated-in-place reference -- pixelsVersion is
     // the real dependency; see the prop docs above.
