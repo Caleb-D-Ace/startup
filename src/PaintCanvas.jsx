@@ -18,13 +18,16 @@ import { getBrushCells, interpolatePoints, CHUNK_DISTANCE_PX, CHUNK_TIME_MS } fr
 import { paletteIndexToHex } from './canvasApi';
 
 /**
+ * @param {string} [id] - forwarded to the underlying <canvas>, so existing
+ *   CSS targeting a specific canvas by id keeps working.
  * @param {number} width - canvas backing width, in pixels
  * @param {number} height - canvas backing height, in pixels
  * @param {{x:number,y:number,paletteIndex:number}[]} pixels - committed pixels to render (parent-owned)
  * @param {{shape:string, size:number, paletteIndex:number}} brush - current tool config
  * @param {(chunk: {points:{x:number,y:number}[], shape:string, size:number, paletteIndex:number}) => void} onStrokeChunk
+ * @param {React.ReactNode} [children] - fallback content for browsers without canvas support
  */
-export function PaintCanvas({ width, height, pixels, brush, onStrokeChunk }) {
+export function PaintCanvas({ id, width, height, pixels, brush, onStrokeChunk, children }) {
   const canvasRef = useRef(null);
 
   // Holds the in-progress drag's not-yet-flushed state across mousemove
@@ -148,6 +151,7 @@ export function PaintCanvas({ width, height, pixels, brush, onStrokeChunk }) {
 
   return (
     <canvas
+      id={id}
       ref={canvasRef}
       width={width}
       height={height}
@@ -155,6 +159,8 @@ export function PaintCanvas({ width, height, pixels, brush, onStrokeChunk }) {
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
-    />
+    >
+      {children}
+    </canvas>
   );
 }

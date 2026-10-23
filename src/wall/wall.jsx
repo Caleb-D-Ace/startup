@@ -1,10 +1,56 @@
-import React, { useState } from 'react';
-import { BrushColorControl } from '../BrushColorControl';
+import React, { useState, useEffect, useMemo } from 'react';
+import { BrushColorControl, DEFAULT_BRUSH_COLOR } from '../BrushColorControl';
+import { PaintCanvas } from '../PaintCanvas';
+import { getCanvasState, subscribe, submitStroke, CANVAS_WIDTH, CANVAS_HEIGHT } from '../canvasApi';
+import { MIN_BRUSH_SIZE, MAX_BRUSH_SIZE } from '../brush';
+import { useAuth } from '../AuthContext';
 
-const DEFAULT_BRUSH_COLOR = 3;
+const DEFAULT_BRUSH_SIZE = 5;
+const BRUSH_SHAPE = 'round'; // only shape implemented so far -- brush-style select below isn't wired to this yet
 
 export function Wall() {
+  const { username } = useAuth();
   const [brushColor, setBrushColor] = useState(DEFAULT_BRUSH_COLOR);
+  const [brushSize, setBrushSize] = useState(DEFAULT_BRUSH_SIZE);
+
+  // Keyed "x,y", same shape canvasApi's own grid uses -- avoids translating
+  // back and forth between representations on every update.
+  const [canvasGrid, setCanvasGrid] = useState(() => getCanvasState());
+
+  // Our own strokes flow through this same subscription rather than being
+  // applied locally on submit -- treating "what I just painted" and "what a
+  // peer just painted" identically keeps there from being two separate
+  // code paths that could drift apart.
+  useEffect(() => {
+    const unsubscribe = subscribe((event) => {
+      if (event.type !== 'stroke') {
+        return;
+      }
+      setCanvasGrid((prev) => {
+        const next = { ...prev };
+        event.pixels.forEach(({ x, y, paletteIndex }) => {
+          next[`${x},${y}`] = { paletteIndex, username: event.username, paintedAt: Date.now() };
+        });
+        return next;
+      });
+    });
+    return unsubscribe;
+  }, []);
+
+  const pixels = useMemo(
+    () =>
+      Object.entries(canvasGrid).map(([key, value]) => {
+        const [x, y] = key.split(',').map(Number);
+        return { x, y, paletteIndex: value.paletteIndex };
+      }),
+    [canvasGrid]
+  );
+
+  const brush = { shape: BRUSH_SHAPE, size: brushSize, paletteIndex: brushColor };
+
+  function handleStrokeChunk(chunk) {
+    submitStroke({ ...chunk, username: username ?? 'anon_guest' });
+  }
 
   return (
     <>
@@ -16,13 +62,20 @@ export function Wall() {
           The canvas automatically updates in real-time as you paint on the wall. Select your brush and start painting!
         </p>
         <div id="canvas-scroll" className="canvas-scroll">
-          <canvas id="paintwall-canvas" width="1280" height="720">
+          <PaintCanvas
+            id="paintwall-canvas"
+            width={CANVAS_WIDTH}
+            height={CANVAS_HEIGHT}
+            pixels={pixels}
+            brush={brush}
+            onStrokeChunk={handleStrokeChunk}
+          >
             Your browser does not support the canvas element. This is where the shared pixel
             wall will be rendered.
-          </canvas>
+          </PaintCanvas>
         </div>
 
-        
+
 
         <div id="toolbar" className="toolbar">
           <h3>Drawing Tools</h3>
@@ -45,7 +98,15 @@ export function Wall() {
 
             <div className="field">
               <label htmlFor="brush-size">Brush size</label>
-              <input type="range" id="brush-size" name="brush-size" min="1" max="50" value="5" />
+              <input
+                type="range"
+                id="brush-size"
+                name="brush-size"
+                min={MIN_BRUSH_SIZE}
+                max={MAX_BRUSH_SIZE}
+                value={brushSize}
+                onChange={(event) => setBrushSize(Number(event.target.value))}
+              />
             </div>
 
             <div className="field">

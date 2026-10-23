@@ -21,11 +21,37 @@ import { useAuth } from './AuthContext';
 const QUICK_SWATCH_COUNT = 9; // + 1 fixed "Custom color..." slot = 10 shown
 const NARROW_BREAKPOINT_PX = 640; // matches app.css's existing 40rem toolbar tier
 
-// Black, White, then the rest of the named vibrant colors (RGB332 indices,
-// same as before) -- swatch priority order before anything's ever been
-// picked. Whatever's actually selected always ends up at the front via
-// promoteToFront regardless of this starting order.
-const DEFAULT_QUICK_SWATCHES = [0, 255, 224, 28, 3, 252, 240, 131, 204];
+// Black, White, then the rest of the originally-requested vibrant colors
+// (RGB332 indices) -- the single source of truth for both the default
+// brush color and the quick-swatch preset list. Deriving both from one
+// object (via withPromoted, below) guarantees DEFAULT_BRUSH_COLOR can never
+// also appear elsewhere in DEFAULT_QUICK_SWATCHES -- that used to be able
+// to happen silently (e.g. a default of Blue colliding with Blue's natural
+// position in a separately hand-written preset array), which both wasted a
+// swatch slot and caused the same color to render as "selected" in two
+// places at once.
+const NAMED_SWATCHES = {
+  black: 0,
+  white: 255,
+  red: 224,
+  green: 28,
+  blue: 3,
+  yellow: 252,
+  orange: 240,
+  purple: 131,
+  brown: 204,
+};
+
+/** Moves `value` to the front of `list` (de-duping its old position) and caps the result at `count` entries. */
+function withPromoted(list, value, count) {
+  return [value, ...list.filter((item) => item !== value)].slice(0, count);
+}
+
+// Wall.jsx and Profile.jsx both import this rather than declaring their own
+// copy, so the two toolbars can't drift out of sync with each other either.
+export const DEFAULT_BRUSH_COLOR = NAMED_SWATCHES.blue;
+
+const DEFAULT_QUICK_SWATCHES = withPromoted(Object.values(NAMED_SWATCHES), DEFAULT_BRUSH_COLOR, QUICK_SWATCH_COUNT);
 
 function useIsNarrow(breakpointPx) {
   const [isNarrow, setIsNarrow] = useState(
@@ -78,7 +104,7 @@ export function BrushColorControl({ selectedIndex, onSelect }) {
   // and outlined, this is also what keeps "the enlarged swatch" in sync
   // with whatever's actually selected.
   function promoteToFront(paletteIndex) {
-    const next = [paletteIndex, ...quickSwatches.filter((i) => i !== paletteIndex)].slice(0, QUICK_SWATCH_COUNT);
+    const next = withPromoted(quickSwatches, paletteIndex, QUICK_SWATCH_COUNT);
     setQuickSwatches(next);
     if (username) {
       saveQuickSwatches(username, next);

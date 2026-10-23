@@ -14,6 +14,8 @@
 // assign numeric IDs from, and a sparse map is what actually fits in
 // localStorage's ~5MB quota for a grid this size.
 
+import { rasterizeStroke } from "./brush";
+
 export const CANVAS_WIDTH = 1280;
 export const CANVAS_HEIGHT = 720;
 
@@ -115,24 +117,23 @@ export function getCanvasState() {
 }
 
 /**
- * Submits a finished (or batched) stroke:
- * { points: [{x, y}, ...], paletteIndex, username }.
- * Resolves it into individual pixels -- the real server will do this same
- * rasterization step (see the README's stroke-batching plan) -- then
- * persists and broadcasts the result to subscribers. Returns the resolved
- * pixel list.
+ * Submits a finished stroke, or one chunk of a longer one (PaintCanvas
+ * flushes every CHUNK_DISTANCE_PX/CHUNK_TIME_MS rather than waiting for the
+ * whole drag -- this function doesn't know or care which):
+ * { points: [{x, y}, ...], shape, size, paletteIndex, username }.
+ * Expands the raw path into actual pixels via rasterizeStroke -- the real
+ * server will do this same rasterization step (see the README's
+ * stroke-batching plan) -- then persists and broadcasts the result to
+ * subscribers. Returns the resolved pixel list.
  */
 export function submitStroke(stroke) {
   const grid = loadGrid();
   const paintedAt = Date.now();
-  const pixels = [];
+  const cells = rasterizeStroke(stroke, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-  stroke.points.forEach(({ x, y }) => {
-    if (x < 0 || y < 0 || x >= CANVAS_WIDTH || y >= CANVAS_HEIGHT) {
-      return;
-    }
+  const pixels = cells.map(({ x, y }) => {
     grid[`${x},${y}`] = { paletteIndex: stroke.paletteIndex, username: stroke.username, paintedAt };
-    pixels.push({ x, y, paletteIndex: stroke.paletteIndex, username: stroke.username });
+    return { x, y, paletteIndex: stroke.paletteIndex, username: stroke.username };
   });
 
   saveGrid(grid);
@@ -257,7 +258,7 @@ function paintFakeStroke() {
   const x = Math.floor(Math.random() * CANVAS_WIDTH);
   const y = Math.floor(Math.random() * CANVAS_HEIGHT);
 
-  submitStroke({ points: [{ x, y }], paletteIndex, username });
+  submitStroke({ points: [{ x, y }], paletteIndex, username, shape: "round", size: 0 });
   notify({ type: "activity", message: `${username} painted near (${x}, ${y})` });
 }
 

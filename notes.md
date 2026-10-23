@@ -95,3 +95,11 @@ A couple notes:
     - `BrowserRouter` component controls the application and routing action
     - `NavLink`/`Link` modifies natural behaviors of the `Routes` component, basically redirecting the `to` and `path` attributes to stay on the page and just prompt the switching of the content
     - Essentially, this creates an `App` component for the router and a `Page` component for a link to direct to.
+
+## React 2
+I'll be honest I forgot to take notes for this segment during the mastery ls section.
+Things to remember:
+- Use arrow functions => for concise, single-line functions. Returns can be implicit.
+
+Project notes:
+- Paintbrush cannot read the ACTUAL canvas due to mouse events giving CSS pixel coords, meaning it reads the viewport space. `function canvasPointFromEvent(event)` calculates the difference in position and scale in order to paint on the canvas itself.

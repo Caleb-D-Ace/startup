@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useAuth } from '../AuthContext';
-import { BrushColorControl } from '../BrushColorControl';
+import { BrushColorControl, DEFAULT_BRUSH_COLOR } from '../BrushColorControl';
+import { MIN_BRUSH_SIZE, MAX_BRUSH_SIZE } from '../brush';
 
-const DEFAULT_BRUSH_COLOR = 3;
+const DEFAULT_BRUSH_SIZE = 5;
 
 export function Profile() {
   const { username } = useAuth();
   const [brushColor, setBrushColor] = useState(DEFAULT_BRUSH_COLOR);
+  const [brushSize, setBrushSize] = useState(DEFAULT_BRUSH_SIZE);
 
   return (
     <>
@@ -64,7 +66,15 @@ export function Profile() {
 
             <div className="field">
               <label htmlFor="avatar-brush-size">Brush size</label>
-              <input type="range" id="avatar-brush-size" name="avatar-brush-size" min="1" max="50" value="5" />
+              <input
+                type="range"
+                id="avatar-brush-size"
+                name="avatar-brush-size"
+                min={MIN_BRUSH_SIZE}
+                max={MAX_BRUSH_SIZE}
+                value={brushSize}
+                onChange={(event) => setBrushSize(Number(event.target.value))}
+              />
             </div>
 
             <div className="field">
