@@ -11,12 +11,24 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [username, setUsername] = useState(null);
 
+  // Same cross-component staleness problem as username, for the saved
+  // avatar: AvatarIcon (header) and Profile's "Set Avatar" button are also
+  // not in an ancestor/descendant relationship, so without a shared signal
+  // the header icon would only ever reflect the avatar as of login, not
+  // whatever was last saved. notifyAvatarChanged bumps this; AvatarIcon
+  // depends on it to know when to re-read the saved pixels.
+  const [avatarVersion, setAvatarVersion] = useState(0);
+
   useEffect(() => {
     const saved = localStorage.getItem('paintwall-username');
     if (saved) {
       setUsername(saved);
     }
   }, []);
+
+  function notifyAvatarChanged() {
+    setAvatarVersion((v) => v + 1);
+  }
 
   function login(name) {
     try {
@@ -38,7 +50,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ username, login, logout }}>
+    <AuthContext.Provider value={{ username, login, logout, avatarVersion, notifyAvatarChanged }}>
       {children}
     </AuthContext.Provider>
   );

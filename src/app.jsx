@@ -3,6 +3,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './app.css';
 import { BrowserRouter, NavLink, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './AuthContext';
+import { AvatarIcon } from './canvas/AvatarIcon';
 import {Wall} from './wall/wall'
 import {Artists} from './artists/artists'
 import {Profile} from './profile/profile'
@@ -65,7 +66,7 @@ export default function App() {
 // not just a port: login state now lives in React, so there's nothing left
 // for a separate script to fight over.
 function AuthPanel() {
-  const { username: loggedInAs, login, logout } = useAuth();
+  const { username: loggedInAs, login, logout, avatarVersion } = useAuth();
   const [usernameInput, setUsernameInput] = useState('');
 
   function handleSubmit(event) {
@@ -86,6 +87,7 @@ function AuthPanel() {
     return (
       <div id="header-auth" className="site-auth">
         <div id="profile-panel">
+          <AvatarIcon username={loggedInAs} avatarVersion={avatarVersion} size={28} />
           <span className="profile-greeting">
             Welcome, <span id="current-username">{loggedInAs}</span>{' '}
             <span id="user-level">(Level 3)</span>

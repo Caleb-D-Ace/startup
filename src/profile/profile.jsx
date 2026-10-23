@@ -10,7 +10,7 @@ const BRUSH_SHAPE = 'round'; // only shape implemented so far -- avatar-brush-st
 const AVATAR_SIZE = 400;
 
 export function Profile() {
-  const { username } = useAuth();
+  const { username, notifyAvatarChanged } = useAuth();
   const [brushColor, setBrushColor] = useState(DEFAULT_BRUSH_COLOR);
   const [brushSize, setBrushSize] = useState(DEFAULT_BRUSH_SIZE);
 
@@ -56,6 +56,7 @@ export function Profile() {
       deduped.set(`${x},${y}`, { x, y, paletteIndex });
     });
     saveAvatar(username, [...deduped.values()]);
+    notifyAvatarChanged(); // tells the header's AvatarIcon (a different part of the tree) to re-read it
   }
 
   return (
