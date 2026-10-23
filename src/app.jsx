@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './app.css';
 import { BrowserRouter, NavLink, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './AuthContext';
 import { AvatarIcon } from './canvas/AvatarIcon';
+import { getUserXp, subscribe } from './canvas/canvasApi';
+import { getLevelProgress } from './canvas/xp';
 import {Wall} from './wall/wall'
 import {Artists} from './artists/artists'
 import {Profile} from './profile/profile'
@@ -69,6 +71,22 @@ function AuthPanel() {
   const { username: loggedInAs, login, logout, avatarVersion } = useAuth();
   const [usernameInput, setUsernameInput] = useState('');
 
+  // Forces a re-read of getUserXp below whenever the logged-in user's own
+  // xp changes. This header stays mounted across every route, including
+  // while actively painting the wall, so (unlike Profile's stats panel,
+  // which only needs to be fresh when you land on it) this one genuinely
+  // needs to live-update, not just read fresh on mount.
+  const [xpTick, setXpTick] = useState(0);
+
+  useEffect(() => {
+    const unsubscribe = subscribe((event) => {
+      if (event.type === 'stroke' && event.username === loggedInAs) {
+        setXpTick((t) => t + 1);
+      }
+    });
+    return unsubscribe;
+  }, [loggedInAs]);
+
   function handleSubmit(event) {
     event.preventDefault();
     const trimmed = usernameInput.trim();
@@ -84,15 +102,23 @@ function AuthPanel() {
   }
 
   if (loggedInAs) {
+    const { xp } = getUserXp(loggedInAs);
+    const levelProgress = getLevelProgress(xp);
     return (
       <div id="header-auth" className="site-auth">
         <div id="profile-panel">
           <AvatarIcon username={loggedInAs} avatarVersion={avatarVersion} size={28} />
           <span className="profile-greeting">
             Welcome, <span id="current-username">{loggedInAs}</span>{' '}
-            <span id="user-level">(Level 3)</span>
+            <span id="user-level">(Level {levelProgress.level})</span>
           </span>
-          <meter id="header-xp-bar" min="0" max="1000" value="420" aria-label="Experience toward next level"></meter>
+          <meter
+            id="header-xp-bar"
+            min="0"
+            max={levelProgress.xpForThisLevel}
+            value={levelProgress.currentLevelXp}
+            aria-label="Experience toward next level"
+          ></meter>
           <button type="button" id="logout-btn" onClick={handleLogout}>Logout</button>
         </div>
         <NavLink to="/about" className="about-link">About</NavLink>

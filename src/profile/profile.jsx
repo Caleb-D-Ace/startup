@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../AuthContext';
 import { BrushColorControl, DEFAULT_BRUSH_COLOR } from '../canvas/BrushColorControl';
 import { PaintCanvas } from '../canvas/PaintCanvas';
-import { loadAvatar, saveAvatar } from '../canvas/canvasApi';
+import { loadAvatar, saveAvatar, getUserXp } from '../canvas/canvasApi';
 import { rasterizeStroke, MIN_BRUSH_SIZE, MAX_BRUSH_SIZE } from '../canvas/brush';
+import { getLevelProgress } from '../canvas/xp';
 
 const DEFAULT_BRUSH_SIZE = 5;
 const BRUSH_SHAPE = 'round'; // only shape implemented so far -- avatar-brush-style select below isn't wired to this yet
@@ -32,6 +33,15 @@ export function Profile() {
   }, [username]);
 
   const brush = { shape: BRUSH_SHAPE, size: brushSize, paletteIndex: brushColor };
+
+  // XP only ever comes from canvasApi.submitStroke (wall painting), never
+  // from the local-only avatar canvas above -- matches the stats copy
+  // below ("pixels the server receives from you on the wall"). A plain
+  // read here (not a subscription) is enough: it's recomputed on every
+  // render, and the only realistic way this page is open while xp changes
+  // is this same tab re-rendering for some other reason anyway.
+  const xpStanding = username ? getUserXp(username) : { xp: 0 };
+  const levelProgress = getLevelProgress(xpStanding.xp);
 
   // rasterizeStroke here mirrors exactly what canvasApi.submitStroke does
   // for the wall, just without any persistence/notify step -- the avatar
@@ -68,14 +78,21 @@ export function Profile() {
             <div className="stats-header">
               <h2 id="stats-username">{username}</h2>
               <div className="field-tooltip-wrap">
-                <progress id="xp-bar" value="420" max="1000" tabIndex={0}>42%</progress>
+                <progress id="xp-bar" value={levelProgress.currentLevelXp} max={levelProgress.xpForThisLevel} tabIndex={0}>
+                  {Math.round((levelProgress.currentLevelXp / levelProgress.xpForThisLevel) * 100)}%
+                </progress>
                 <p className="field-tooltip" role="tooltip">
                   Every batch of pixels the server receives from you on the wall adds experience.
                   Level up the more you paint!
                 </p>
               </div>
             </div>
-            <p><span id="xp-label">420 / 1000 XP</span> to Level 4</p>
+            <p>
+              <span id="xp-label">
+                {levelProgress.currentLevelXp.toLocaleString()} / {levelProgress.xpForThisLevel.toLocaleString()} XP
+              </span>{' '}
+              to Level {levelProgress.level + 1}
+            </p>
           </>
         ) : (
           <p>Log in to see stats and create avatar</p>

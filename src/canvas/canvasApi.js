@@ -85,7 +85,7 @@ export const QUICK_SWATCHES = [...new Set(QUICK_SWATCH_SOURCE_COLORS.map(hexToPa
 const CANVAS_STORAGE_KEY = "paintwall-canvas";
 const AVATAR_STORAGE_KEY_PREFIX = "paintwall-avatar-";
 
-const FAKE_USERNAMES = ["Sarah", "anon_guest", "PixelPete", "WallFlower", "GraffitiGus"];
+const FAKE_USERNAMES = ["Sarah", "anon_guest", "Markiploer", "thy_mother", "Gryffindor"];
 const SIMULATION_INTERVAL_MS = 4000;
 
 const subscribers = new Set();
@@ -161,6 +161,13 @@ export function getCanvasState() {
  * server will do this same rasterization step (see the README's
  * stroke-batching plan) -- then persists and broadcasts the result to
  * subscribers. Returns the resolved pixel list.
+ *
+ * Every resolved pixel also adds 1 xp to the painting user's lifetime
+ * total, repaints included -- repainting an already-painted cell earns the
+ * same xp as a blank one, deliberately. Ranking by *current* wall
+ * ownership instead would make painting over someone else's work the
+ * optimal strategy (it steals their standing); lifetime xp is purely
+ * additive, so there's no such incentive.
  */
 export function submitStroke(stroke) {
   const grid = loadGrid();
@@ -171,6 +178,10 @@ export function submitStroke(stroke) {
     grid[`${x},${y}`] = { paletteIndex: stroke.paletteIndex, username: stroke.username, paintedAt };
     return { x, y, paletteIndex: stroke.paletteIndex, username: stroke.username };
   });
+
+  if (pixels.length > 0) {
+    addXp(stroke.username, pixels.length);
+  }
 
   scheduleSave();
   notify({ type: "stroke", pixels, username: stroke.username });
@@ -216,71 +227,109 @@ export function loadAvatar(username) {
   }
 }
 
-// Persists BrushColorControl's quick-swatch list, keyed per username (one
-// list per logged-in user, same idea as avatars). Unlike avatars, the set
-// of usernames here is unbounded and not under our control -- anyone can
-// "log in" as a new username at any time (see AuthContext) -- so without a
-// cap, someone could balloon localStorage by cycling through thousands of
-// throwaway usernames. QUICK_SWATCH_USERS_KEY tracks which usernames
-// currently have a saved list, in plain FIFO insertion order (not MRU --
-// re-saving an existing username's list just updates their data in place,
-// it doesn't move them in the queue): once MAX_QUICK_SWATCH_USERS is hit,
-// the username that was tracked *first* is evicted when a new one arrives,
-// regardless of how recently that first one was actually used. Simple,
-// and the stated cost (an idle username can eventually lose its list) is
-// an accepted tradeoff, not a bug.
-
-const MAX_QUICK_SWATCH_USERS = 10;
-const QUICK_SWATCH_STORAGE_KEY_PREFIX = "paintwall-quickswatches-";
-const QUICK_SWATCH_USERS_KEY = "paintwall-quickswatches-users"; // tracked usernames, FIFO order
-
-function loadTrackedUsers() {
-  try {
-    const raw = localStorage.getItem(QUICK_SWATCH_USERS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-/** @param {string} username  @param {number[]} paletteIndices */
-export function saveQuickSwatches(username, paletteIndices) {
-  try {
-    localStorage.setItem(QUICK_SWATCH_STORAGE_KEY_PREFIX + username, JSON.stringify(paletteIndices));
-  } catch {
-    return; // storage full/unavailable -- fine for a mock
-  }
-
-  const trackedUsers = loadTrackedUsers();
-  if (trackedUsers.includes(username)) {
-    return; // already tracked -- FIFO position doesn't change on re-save
-  }
-
-  trackedUsers.push(username);
-  if (trackedUsers.length > MAX_QUICK_SWATCH_USERS) {
-    const evicted = trackedUsers.shift(); // oldest-tracked username, evicted first
+// Generic FIFO-capped-per-username localStorage store. Anyone can "log in"
+// as a new username at any time (see AuthContext), unbounded and not under
+// our control -- without a cap, someone could balloon localStorage by
+// cycling through thousands of throwaway usernames. The usersListKey
+// tracks which usernames currently have data, in plain FIFO insertion
+// order (not MRU -- re-saving an existing username's value just updates it
+// in place, it doesn't move them in the queue): once maxUsers is hit, the
+// username that was tracked *first* is evicted when a new one arrives,
+// regardless of how recently that first one was actually used. Simple, and
+// the stated cost (an idle username can eventually lose its data) is an
+// accepted tradeoff, not a bug. Shared by quick swatches and XP below.
+function createPerUserStore(storageKeyPrefix, usersListKey, maxUsers) {
+  function loadTrackedUsers() {
     try {
-      localStorage.removeItem(QUICK_SWATCH_STORAGE_KEY_PREFIX + evicted);
+      const raw = localStorage.getItem(usersListKey);
+      return raw ? JSON.parse(raw) : [];
     } catch {
-      // fine
+      return [];
     }
   }
 
-  try {
-    localStorage.setItem(QUICK_SWATCH_USERS_KEY, JSON.stringify(trackedUsers));
-  } catch {
-    // fine -- the list itself already saved above either way
+  function save(username, value) {
+    try {
+      localStorage.setItem(storageKeyPrefix + username, JSON.stringify(value));
+    } catch {
+      return; // storage full/unavailable -- fine for a mock
+    }
+
+    const trackedUsers = loadTrackedUsers();
+    if (trackedUsers.includes(username)) {
+      return; // already tracked -- FIFO position doesn't change on re-save
+    }
+
+    trackedUsers.push(username);
+    if (trackedUsers.length > maxUsers) {
+      const evicted = trackedUsers.shift(); // oldest-tracked username, evicted first
+      try {
+        localStorage.removeItem(storageKeyPrefix + evicted);
+      } catch {
+        // fine
+      }
+    }
+
+    try {
+      localStorage.setItem(usersListKey, JSON.stringify(trackedUsers));
+    } catch {
+      // fine -- the value itself already saved above either way
+    }
   }
+
+  function load(username) {
+    try {
+      const raw = localStorage.getItem(storageKeyPrefix + username);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  return { save, load, listUsers: loadTrackedUsers };
+}
+
+const quickSwatchStore = createPerUserStore("paintwall-quickswatches-", "paintwall-quickswatches-users", 10);
+
+/** @param {string} username  @param {number[]} paletteIndices */
+export function saveQuickSwatches(username, paletteIndices) {
+  quickSwatchStore.save(username, paletteIndices);
 }
 
 /** @param {string} username  @returns {number[] | null} */
 export function loadQuickSwatches(username) {
-  try {
-    const raw = localStorage.getItem(QUICK_SWATCH_STORAGE_KEY_PREFIX + username);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
+  return quickSwatchStore.load(username);
+}
+
+// XP standing is more consequential to a user than their swatch picks --
+// losing a quick-swatch list to the FIFO cap is a shrug, losing your
+// leaderboard spot isn't -- so this gets a much larger cap to make evicting
+// an actual active/high-scoring user far less likely in practice, without
+// bothering to make eviction XP-aware (unnecessary complexity for a mock).
+const MAX_XP_TRACKED_USERS = 50;
+const xpStore = createPerUserStore("paintwall-xp-", "paintwall-xp-users", MAX_XP_TRACKED_USERS);
+
+/** @returns {{xp: number, lastActive: number}} */
+export function getUserXp(username) {
+  return xpStore.load(username) ?? { xp: 0, lastActive: null };
+}
+
+function addXp(username, amount) {
+  const current = xpStore.load(username) ?? { xp: 0, lastActive: null };
+  xpStore.save(username, { xp: current.xp + amount, lastActive: Date.now() });
+}
+
+/**
+ * Every tracked username's XP standing, sorted highest first -- "Top
+ * Artists" reads straight from this. Only usernames that have painted at
+ * least once show up here (same username list the FIFO cap manages), so a
+ * user's own name appears the moment they first paint, not before.
+ */
+export function getLeaderboard() {
+  return xpStore
+    .listUsers()
+    .map((username) => ({ username, ...getUserXp(username) }))
+    .sort((a, b) => b.xp - a.xp);
 }
 
 // ---- Simulated peer activity --------------------------------------------

@@ -2,8 +2,8 @@
 // n^1.2 power curve (an "exponential" leveling feel, just gentler than a
 // true exponential), scaled so completing level 1 takes ~500 xp.
 
-export const XP_LEVEL_BASE = 500;
-export const XP_LEVEL_EXPONENT = 1.2;
+export const XP_LEVEL_BASE = 10000;
+export const XP_LEVEL_EXPONENT = 2.5;
 
 /** Cumulative xp needed to complete `level` (i.e. to advance to level+1). */
 export function xpForLevel(level) {
