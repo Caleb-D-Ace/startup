@@ -345,9 +345,11 @@ export function Wall() {
                   <label htmlFor="brush-style">Brush style</label>
                   <select id="brush-style" name="brush-style">
                     <option value="round">Round</option>
+                    {/* Not implemented yet -- round is the only shape brush.js/PaintCanvas support right now.
                     <option value="square">Square</option>
                     <option value="spray">Spray</option>
                     <option value="calligraphy">Calligraphy</option>
+                    */}
                   </select>
                 </div>
 
