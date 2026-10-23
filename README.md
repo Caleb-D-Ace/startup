@@ -153,13 +153,13 @@ The painting system is the last piece of this deliverable to build. Plan before 
 
 For this deliverable I did the following. I checked the box `[x]` and added a description for things I completed.
 
-- [ ] I completed the prerequisites for this deliverable (Simon deployed, GitHub link, Git commits)
-- [ ] **All functionality implemented or mocked out** - I did not complete this part of the deliverable.
-- [ ] **Hooks** - I did not complete this part of the deliverable.
+- [X] I completed the prerequisites for this deliverable (Simon deployed, GitHub link, Git commits)
+- [X] **All functionality implemented or mocked out** - The paint canvas, live user feed, username system, stroke viewing system, synchronization system, leaderboard system, external API requests, color picker, and XP system all work as intended at this stage. Additional brushes can be added in future deliverables as I have time.
+- [X] **Hooks** - useState: Authorization, brush color, size, tool, color suggestions, and activity feed implement useState to re-render their updated information. useEffect: Avatar icon, paint canvas, and various elements within wall.jsx (and across the other files) to read persistent storage, handle our debounced TheColorAPI fetch code, usernames, etc.
 
 #### Canvas API plan (or at least the mockup)
 
-This is the actual painting application. The backend code will come later (databases and network functionality), so this is purely the client-side mockup. It will have a `canvasApi.js` module that exposes the **same function signatures the real future HTTP + WebSocket API will have** (otherwise this would be a crappy mockup), just backed by `localStorage` and `setInterval` instead of a server. Swapping it out later means reimplementing this one module, not every component that calls it. Much easier.
+This was the plan for the actual painting application. The backend code will come later (databases and network functionality), so this is purely the client-side mockup. It will have a `canvasApi.js` module that exposes the **same function signatures the real future HTTP + WebSocket API will have** (otherwise this would be a crappy mockup), just backed by `localStorage` and `setInterval` instead of a server. Swapping it out later means reimplementing this one module, not every component that calls it. Much easier.
 
 ```mermaid
 flowchart TB
