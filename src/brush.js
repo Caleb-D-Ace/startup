@@ -6,6 +6,14 @@
 export const CHUNK_DISTANCE_PX = 28; // "n" -- flush a chunk after the path travels this far
 export const CHUNK_TIME_MS = 250; // ...or after this much time, whichever comes first
 
+// Brush radius bounds, in pixels. MIN keeps a dab from shrinking to
+// single-pixel precision (so painting over one specific pixel of someone
+// else's work takes a deliberate zoomed-in effort, not an easy accident);
+// MAX caps a single dab at 100px across so one stroke can't blot out a
+// large area of the shared wall in an instant.
+export const MIN_BRUSH_SIZE = 2;
+export const MAX_BRUSH_SIZE = 50;
+
 /**
  * The set of {x, y} canvas-pixel cells one brush dab covers, centered at
  * (cx, cy). Only 'round' is implemented for now; other shapes land later
