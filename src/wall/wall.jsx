@@ -42,9 +42,23 @@ export function Wall() {
 
     getColorSuggestions(hex)
       .then((colors) => {
-        if (requestId === suggestionsRequestRef.current) {
-          setColorSuggestions(colors);
+        if (requestId !== suggestionsRequestRef.current) {
+          return;
         }
+        // TheColorAPI's colors are arbitrary RGB; our palette only has 256
+        // slots, so two visually-distinct suggestions can quantize to the
+        // exact same paintable color. Showing both would be a confusing
+        // duplicate once you can only ever pick one or the other.
+        const seenPaletteIndices = new Set();
+        const deduped = colors.filter((color) => {
+          const paletteIndex = hexToPaletteIndex(color.hex);
+          if (seenPaletteIndices.has(paletteIndex)) {
+            return false;
+          }
+          seenPaletteIndices.add(paletteIndex);
+          return true;
+        });
+        setColorSuggestions(deduped);
       })
       .catch(() => {
         if (requestId === suggestionsRequestRef.current) {
@@ -223,20 +237,6 @@ export function Wall() {
           </div>
 
           <fieldset id="palette-fieldset">
-            <legend>Color palette suggestions</legend>
-            <p>
-              Complementary colors pulled from the
-              <a href="https://www.thecolorapi.com/" target="_blank" rel="noopener">TheColorAPI</a>
-              third party service, based on the currently selected color. Click one to paint with it.
-            </p>
-            <button
-              type="button"
-              id="refresh-suggestions-btn"
-              onClick={handleRefreshSuggestions}
-              disabled={colorSuggestions === null}
-            >
-              Refresh suggestions
-            </button>
             {colorSuggestions === 'error' ? (
               <p className="palette-suggestions-status">Couldn&apos;t reach TheColorAPI -- try again in a moment.</p>
             ) : colorSuggestions === null ? (
@@ -252,11 +252,27 @@ export function Wall() {
                       onClick={() => handleSelectSuggestion(color.hex)}
                       aria-label={`Use ${color.name}, ${color.hex}`}
                     />
-                    <span>{color.name} ({color.hex})</span>
+                    <span className="suggestion-name">{color.name}</span>
+                    <span className="suggestion-hex">({color.hex})</span>
                   </li>
                 ))}
               </ul>
             )}
+
+            <div className="palette-footer-row">
+              <button
+                type="button"
+                id="refresh-suggestions-btn"
+                onClick={handleRefreshSuggestions}
+                disabled={colorSuggestions === null}
+              >
+                Color Palette Suggestions
+              </button>
+
+              <p className="palette-credit">
+                Colors suggested by <a href="https://www.thecolorapi.com/" target="_blank" rel="noopener">TheColorAPI</a>
+              </p>
+            </div>
           </fieldset>
 
           <button type="button" id="save-wall-btn">Save Wall</button>

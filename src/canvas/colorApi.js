@@ -36,10 +36,14 @@ export async function getColorSuggestions(hex, mode = 'complement', count = 4) {
  * different (but still nearby, still thematically close) suggestions each
  * click, instead of the identical result every time.
  * @param {string} hex - "#rrggbb" or "rrggbb"
- * @param {number} [amount] - max +/- jitter per channel. Defaults to 24.
+ * @param {number} [amount] - max +/- jitter per channel. Defaults to 50 --
+ *   deliberately bigger than it looks like it needs to be, since our
+ *   palette only has 7-8 steps per channel (255/7 ~= 36 units apart for
+ *   red/green); a smaller jitter often wouldn't even cross one quantized
+ *   step, defeating the point.
  * @returns {string} "#rrggbb"
  */
-export function jitterHex(hex, amount = 24) {
+export function jitterHex(hex, amount = 50) {
   const clean = hex.replace('#', '');
   const channel = (start) => {
     const value = parseInt(clean.substring(start, start + 2), 16);

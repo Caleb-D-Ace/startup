@@ -517,23 +517,59 @@ main {
   border-radius: var(--radius);
 }
 
+/* Single row, never wraps -- as the panel narrows, .suggestion-hex and then
+   .suggestion-name are dropped entirely (see the media queries below)
+   rather than letting the row wrap or clip, so there's never a spillover
+   line, just progressively less text next to each swatch. */
 #palette-suggestions {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 0.75rem;
   list-style: none;
   padding: 0;
+  margin: 0;
 }
 
 #palette-suggestions li {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.35rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+@media (max-width: 50rem) {
+  .suggestion-hex {
+    display: none;
+  }
+}
+
+@media (max-width: 40rem) {
+  .suggestion-name {
+    display: none;
+  }
 }
 
 .palette-suggestions-status {
   font-style: italic;
-  color: var(--color-muted, inherit);
+  color: var(--color-text-muted);
+}
+
+/* Button and credit share one line -- justify-content: space-between does
+   the right-alignment for the credit now, not text-align. */
+.palette-footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 5px;
+}
+
+.palette-credit {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin: 0;
 }
 
 /* BrushColorControl: quick swatches arrayed on one line (reuses
