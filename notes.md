@@ -103,3 +103,8 @@ Things to remember:
 
 Project notes:
 - Paintbrush cannot read the ACTUAL canvas due to mouse events giving CSS pixel coords, meaning it reads the viewport space. `function canvasPointFromEvent(event)` calculates the difference in position and scale in order to paint on the canvas itself.
+
+## HTTP Service
+- Express is a library that enables your application to double as the web service. Libraries such as Express enable built-in web support and endpoint creation.
+- Web servers use ports to enable access to multiple services at once. Use a reverse proxy (service gateway) to distribute requests from web services to the proper ports. This is kind of like a router.
+- 
