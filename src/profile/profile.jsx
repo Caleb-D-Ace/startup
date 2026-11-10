@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../AuthContext';
 import { BrushColorControl, DEFAULT_BRUSH_COLOR } from '../canvas/BrushColorControl';
 import { PaintCanvas } from '../canvas/PaintCanvas';
-import { loadAvatar, saveAvatar, getUserXp } from '../canvas/canvasApi';
+import { loadAvatar, saveAvatar } from '../canvas/canvasApi';
 import { rasterizeStroke, MIN_BRUSH_SIZE, MAX_BRUSH_SIZE } from '../canvas/brush';
 import { getLevelProgress } from '../canvas/xp';
 
@@ -11,7 +11,7 @@ const BRUSH_SHAPE = 'round'; // only shape implemented so far -- avatar-brush-st
 const AVATAR_SIZE = 400;
 
 export function Profile() {
-  const { username, notifyAvatarChanged } = useAuth();
+  const { username, notifyAvatarChanged, xp } = useAuth();
   const [brushColor, setBrushColor] = useState(DEFAULT_BRUSH_COLOR);
   const [brushSize, setBrushSize] = useState(DEFAULT_BRUSH_SIZE);
 
@@ -34,14 +34,12 @@ export function Profile() {
 
   const brush = { shape: BRUSH_SHAPE, size: brushSize, paletteIndex: brushColor };
 
-  // XP only ever comes from canvasApi.submitStroke (wall painting), never
-  // from the local-only avatar canvas above -- matches the stats copy
-  // below ("pixels the server receives from you on the wall"). A plain
-  // read here (not a subscription) is enough: it's recomputed on every
-  // render, and the only realistic way this page is open while xp changes
-  // is this same tab re-rendering for some other reason anyway.
-  const xpStanding = username ? getUserXp(username) : { xp: 0 };
-  const levelProgress = getLevelProgress(xpStanding.xp);
+  // XP only ever comes from the server (wall painting via POST
+  // /wall/strokes), never from the local-only avatar canvas above --
+  // matches the stats copy below ("pixels the server receives from you on
+  // the wall"). AuthContext's xp is already kept current from login/the
+  // stroke response, so this just reads it.
+  const levelProgress = getLevelProgress(xp);
 
   // rasterizeStroke here mirrors exactly what canvasApi.submitStroke does
   // for the wall, just without any persistence/notify step -- the avatar

@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './app.css';
 import { BrowserRouter, NavLink, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './AuthContext';
 import { AvatarIcon } from './canvas/AvatarIcon';
-import { getUserXp, subscribe } from './canvas/canvasApi';
 import { getLevelProgress } from './canvas/xp';
 import {Wall} from './wall/wall'
 import {Artists} from './artists/artists'
@@ -68,26 +67,10 @@ export default function App() {
 // not just a port: login state now lives in React, so there's nothing left
 // for a separate script to fight over.
 function AuthPanel() {
-  const { username: loggedInAs, login, logout, avatarVersion } = useAuth();
+  const { username: loggedInAs, login, logout, avatarVersion, xp } = useAuth();
   const [usernameInput, setUsernameInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [authError, setAuthError] = useState('');
-
-  // Forces a re-read of getUserXp below whenever the logged-in user's own
-  // xp changes. This header stays mounted across every route, including
-  // while actively painting the wall, so (unlike Profile's stats panel,
-  // which only needs to be fresh when you land on it) this one genuinely
-  // needs to live-update, not just read fresh on mount.
-  const [xpTick, setXpTick] = useState(0);
-
-  useEffect(() => {
-    const unsubscribe = subscribe((event) => {
-      if (event.type === 'stroke' && event.username === loggedInAs) {
-        setXpTick((t) => t + 1);
-      }
-    });
-    return unsubscribe;
-  }, [loggedInAs]);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -110,7 +93,6 @@ function AuthPanel() {
   }
 
   if (loggedInAs) {
-    const { xp } = getUserXp(loggedInAs);
     const levelProgress = getLevelProgress(xp);
     return (
       <div id="header-auth" className="site-auth">

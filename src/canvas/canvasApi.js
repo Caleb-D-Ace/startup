@@ -386,8 +386,22 @@ function paintFakeStroke() {
   const x = CANVAS_WIDTH - FAKE_ACTIVITY_REGION_WIDTH + Math.floor(Math.random() * FAKE_ACTIVITY_REGION_WIDTH);
   const y = Math.floor(Math.random() * FAKE_ACTIVITY_REGION_HEIGHT);
 
-  submitStroke({ points: [{ x, y }], paletteIndex, username, shape: "round", size: 0 });
-  // submitStroke itself emits the matching "activity" notification now.
+  // Purely local/visual, unlike a real stroke -- a fake peer has no real
+  // account or auth token to submit with, so this notifies subscribers
+  // directly instead of going through submitStroke. Never touches the
+  // shared server-held wall and never earns xp; PaintCanvas/Wall can't
+  // tell the difference when rendering it, since it's the same "stroke"
+  // event shape submitStroke emits.
+  const cells = rasterizeStroke({ points: [{ x, y }], shape: "round", size: 0 }, CANVAS_WIDTH, CANVAS_HEIGHT);
+  const pixels = cells.map((cell) => ({ ...cell, paletteIndex, username }));
+  notify({ type: "stroke", pixels, username });
+
+  const now = Date.now();
+  const lastNotifiedAt = lastActivityAt.get(username) ?? 0;
+  if (now - lastNotifiedAt >= ACTIVITY_THROTTLE_MS) {
+    lastActivityAt.set(username, now);
+    notify({ type: "activity", username, message: `${username} painted near (${x}, ${y})` });
+  }
 }
 
 function startSimulation() {

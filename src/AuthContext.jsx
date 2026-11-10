@@ -10,6 +10,8 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [username, setUsername] = useState(null);
+  const [xp, setXp] = useState(0);
+  const [level, setLevel] = useState(1);
 
   // Same cross-component staleness problem as username, for the saved
   // avatar: AvatarIcon (header) and Profile's "Set Avatar" button are also
@@ -27,6 +29,8 @@ export function AuthProvider({ children }) {
       .then((data) => {
         if (data) {
           setUsername(data.username);
+          setXp(data.xp);
+          setLevel(data.level);
         }
       })
       .catch(() => {
@@ -58,6 +62,8 @@ export function AuthProvider({ children }) {
 
     const data = await response.json();
     setUsername(data.username);
+    setXp(data.xp);
+    setLevel(data.level);
     return { ok: true };
   }
 
@@ -68,10 +74,22 @@ export function AuthProvider({ children }) {
       // service unreachable -- still clear client-side state below
     }
     setUsername(null);
+    setXp(0);
+    setLevel(1);
+  }
+
+  // Lets a stroke response update xp/level directly (POST /wall/strokes
+  // already returns the painting user's new totals) instead of making the
+  // header re-fetch /api/user/me after every ~250ms stroke chunk.
+  function updateXp(newXp, newLevel) {
+    setXp(newXp);
+    setLevel(newLevel);
   }
 
   return (
-    <AuthContext.Provider value={{ username, login, logout, avatarVersion, notifyAvatarChanged }}>
+    <AuthContext.Provider
+      value={{ username, login, logout, avatarVersion, notifyAvatarChanged, xp, level, updateXp }}
+    >
       {children}
     </AuthContext.Provider>
   );

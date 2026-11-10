@@ -52,6 +52,16 @@ function createSession(res, user) {
   });
 }
 
+// Shared by every "who is this user" response (create, login, user/me) so
+// the header's xp/level is never stale -- without this, a returning user
+// would see 0 xp right after logging in, until their next stroke response
+// happened to carry the real value.
+async function userSummary(user) {
+  const { getLevel } = await import('../src/canvas/xp.js');
+  const xp = user.xp ?? 0;
+  return { username: user.username, xp, level: getLevel(xp) };
+}
+
 const apiRouter = express.Router();
 app.use('/api', apiRouter);
 
@@ -74,7 +84,7 @@ apiRouter.post('/auth/create', async (req, res) => {
   users.push(user);
 
   createSession(res, user);
-  res.send({ username: user.username });
+  res.send(await userSummary(user));
 });
 
 // Log in an existing user
@@ -82,7 +92,7 @@ apiRouter.post('/auth/login', async (req, res) => {
   const user = getUserByUsername(req.body.username);
   if (user && (await bcrypt.compare(req.body.password ?? '', user.password))) {
     createSession(res, user);
-    return res.send({ username: user.username });
+    return res.send(await userSummary(user));
   }
   res.status(401).send({ msg: 'Unauthorized' });
 });
@@ -110,8 +120,8 @@ const verifyAuth = (req, res, next) => {
 };
 
 // Returns who is logged in, so the frontend can restore state on reload
-apiRouter.get('/user/me', verifyAuth, (req, res) => {
-  res.send({ username: req.user.username });
+apiRouter.get('/user/me', verifyAuth, async (req, res) => {
+  res.send(await userSummary(req.user));
 });
 
 // Current wall pixel state, for initial page load. Public -- anyone can
