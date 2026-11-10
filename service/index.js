@@ -146,6 +146,7 @@ apiRouter.post('/wall/strokes', verifyAuth, async (req, res) => {
   });
 
   req.user.xp = (req.user.xp ?? 0) + pixels.length;
+  req.user.lastActive = paintedAt;
 
   res.send({ pixels, xp: req.user.xp, level: getLevel(req.user.xp) });
 });
@@ -153,12 +154,19 @@ apiRouter.post('/wall/strokes', verifyAuth, async (req, res) => {
 // Clears the wall. Protected -- powers the existing "Clear Canvas" testing
 // button.
 apiRouter.delete('/wall', verifyAuth, (req, res) => {
-  res.status(501).send({ msg: 'Not implemented yet' });
+  Object.keys(wallState).forEach(k => delete wallState[k]);
 });
 
-// Leaderboard. Public, reads from the same in-memory xp data strokes write to.
+// Leaderboard. Public, reads from the same in-memory xp data strokes write
+// to. Only users who've actually painted (xp > 0) show up, matching the
+// mock's behavior -- every freshly-registered user otherwise crowds the
+// board with zero-xp rows nobody wants to see.
 apiRouter.get('/leaderboard', (req, res) => {
-  res.status(501).send({ msg: 'Not implemented yet' });
+  const leaderboard = users
+    .filter((u) => (u.xp ?? 0) > 0)
+    .map((u) => ({ username: u.username, xp: u.xp, lastActive: u.lastActive ?? null }))
+    .sort((a, b) => b.xp - a.xp);
+  res.send(leaderboard);
 });
 
 app.listen(port, () => {
