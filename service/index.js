@@ -2,6 +2,7 @@ const express = require ('express');
 const bcrypt = require ('bcryptjs');
 const cookieParser = require('cookie-parser');
 const { v4: uuidv4 } = require('uuid');
+const { rasterizeStroke, getLevel } = require('./gameLogic');
 
 const app = express();
 const port = process.argv.length > 2 ? process.argv[2] : 4000;
@@ -56,8 +57,7 @@ function createSession(res, user) {
 // the header's xp/level is never stale -- without this, a returning user
 // would see 0 xp right after logging in, until their next stroke response
 // happened to carry the real value.
-async function userSummary(user) {
-  const { getLevel } = await import('../src/canvas/xp.js');
+function userSummary(user) {
   const xp = user.xp ?? 0;
   return { username: user.username, xp, level: getLevel(xp) };
 }
@@ -84,7 +84,7 @@ apiRouter.post('/auth/create', async (req, res) => {
   users.push(user);
 
   createSession(res, user);
-  res.send(await userSummary(user));
+  res.send(userSummary(user));
 });
 
 // Log in an existing user
@@ -92,7 +92,7 @@ apiRouter.post('/auth/login', async (req, res) => {
   const user = getUserByUsername(req.body.username);
   if (user && (await bcrypt.compare(req.body.password ?? '', user.password))) {
     createSession(res, user);
-    return res.send(await userSummary(user));
+    return res.send(userSummary(user));
   }
   res.status(401).send({ msg: 'Unauthorized' });
 });
@@ -120,8 +120,8 @@ const verifyAuth = (req, res, next) => {
 };
 
 // Returns who is logged in, so the frontend can restore state on reload
-apiRouter.get('/user/me', verifyAuth, async (req, res) => {
-  res.send(await userSummary(req.user));
+apiRouter.get('/user/me', verifyAuth, (req, res) => {
+  res.send(userSummary(req.user));
 });
 
 // Current wall pixel state, for initial page load. Public -- anyone can
@@ -147,12 +147,6 @@ apiRouter.post('/wall/strokes', verifyAuth, async (req, res) => {
   if (!Array.isArray(points)) {
     return res.status(400).send({ msg: 'points required' });
   }
-
-  // Dynamic import -- these are ES modules shared with the frontend, loaded
-  // from a CommonJS file. Node caches the module after the first call, so
-  // this isn't a disk read per stroke.
-  const { rasterizeStroke } = await import('../src/canvas/brush.js');
-  const { getLevel } = await import('../src/canvas/xp.js');
 
   const cells = rasterizeStroke({ points, shape, size }, CANVAS_WIDTH, CANVAS_HEIGHT);
   const paintedAt = Date.now();
