@@ -14,6 +14,10 @@ const authCookieName = 'token';
 // Create our empty lists for temp storage
 const users = [];
 
+// Every currently-painted pixel, keyed "x,y" -> { paletteIndex, username,
+// paintedAt }. Sparse on purpose -- most of an 854x480 wall stays unpainted.
+const wallState = {};
+
 function getUserByUsername(username) {
   return users.find((u) => u.username === username);
 }
@@ -103,7 +107,7 @@ apiRouter.get('/user/me', verifyAuth, (req, res) => {
 // Current wall pixel state, for initial page load. Public -- anyone can
 // view the wall, logged in or not.
 apiRouter.get('/wall', (req, res) => {
-  res.status(501).send({ msg: 'Not implemented yet' });
+  res.send(wallState);
 });
 
 // Submit a stroke. Protected -- painting requires a logged-in identity,
