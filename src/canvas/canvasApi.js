@@ -82,7 +82,6 @@ const QUICK_SWATCH_SOURCE_COLORS = [
 
 export const QUICK_SWATCHES = [...new Set(QUICK_SWATCH_SOURCE_COLORS.map(hexToPaletteIndex))];
 
-const CANVAS_STORAGE_KEY = "paintwall-canvas";
 const AVATAR_STORAGE_KEY_PREFIX = "paintwall-avatar-";
 
 const FAKE_USERNAMES = ["Sarah", "anon_guest", "Markiploer", "thy_mother", "Gryffindor seeker", "Dracaena Malfoy", "Sauceror1999"];
@@ -106,58 +105,6 @@ let simulationTimer = null;
 // localStorage-backed stores below use.
 const ACTIVITY_THROTTLE_MS = 5000;
 const lastActivityAt = new Map(); // username -> timestamp of its last emitted activity notification
-
-// submitStroke runs on every chunk flush (every ~28px/250ms while
-// dragging), so re-parsing/re-serializing the *entire* grid on every call
-// scales with total session history, not with what's new. gridCache keeps
-// one in-memory copy (loaded from localStorage once) and the actual write
-// is debounced, so a rapid burst of flushes from one drag collapses into a
-// single localStorage.setItem shortly after painting pauses.
-let gridCache = null;
-let saveTimer = null;
-const SAVE_DEBOUNCE_MS = 400;
-
-function loadGrid() {
-  if (gridCache === null) {
-    try {
-      const raw = localStorage.getItem(CANVAS_STORAGE_KEY);
-      gridCache = raw ? JSON.parse(raw) : {};
-    } catch {
-      gridCache = {};
-    }
-  }
-  return gridCache;
-}
-
-function flushSave() {
-  if (saveTimer) {
-    clearTimeout(saveTimer);
-    saveTimer = null;
-  }
-  try {
-    localStorage.setItem(CANVAS_STORAGE_KEY, JSON.stringify(gridCache));
-  } catch {
-    // localStorage full or unavailable -- fine for a mock, painted pixels
-    // just won't persist across a reload.
-  }
-}
-
-function scheduleSave() {
-  if (saveTimer) {
-    clearTimeout(saveTimer);
-  }
-  saveTimer = setTimeout(flushSave, SAVE_DEBOUNCE_MS);
-}
-
-// Safety net: if the tab closes mid-debounce, flush immediately rather than
-// silently losing however many strokes were painted in the last 400ms.
-if (typeof window !== "undefined") {
-  window.addEventListener("beforeunload", () => {
-    if (saveTimer) {
-      flushSave();
-    }
-  });
-}
 
 function notify(event) {
   subscribers.forEach((callback) => callback(event));
@@ -373,11 +320,6 @@ const xpStore = createPerUserStore("paintwall-xp-", "paintwall-xp-users", MAX_XP
 /** @returns {{xp: number, lastActive: number}} */
 export function getUserXp(username) {
   return xpStore.load(username) ?? { xp: 0, lastActive: null };
-}
-
-function addXp(username, amount) {
-  const current = xpStore.load(username) ?? { xp: 0, lastActive: null };
-  xpStore.save(username, { xp: current.xp + amount, lastActive: Date.now() });
 }
 
 /**
