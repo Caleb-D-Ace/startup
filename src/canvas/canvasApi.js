@@ -85,7 +85,7 @@ export const QUICK_SWATCHES = [...new Set(QUICK_SWATCH_SOURCE_COLORS.map(hexToPa
 const CANVAS_STORAGE_KEY = "paintwall-canvas";
 const AVATAR_STORAGE_KEY_PREFIX = "paintwall-avatar-";
 
-const FAKE_USERNAMES = ["Sarah", "anon_guest", "Markiploer", "thy_mother", "Gryffindor"];
+const FAKE_USERNAMES = ["Sarah", "anon_guest", "Markiploer", "thy_mother", "Gryffindor seeker", "Dracaena Malfoy", "Sauceror1999"];
 const SIMULATION_INTERVAL_MS = 4000;
 
 // Confined to a corner rather than scattered across the whole canvas, so

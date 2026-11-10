@@ -70,6 +70,8 @@ export default function App() {
 function AuthPanel() {
   const { username: loggedInAs, login, logout, avatarVersion } = useAuth();
   const [usernameInput, setUsernameInput] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
+  const [authError, setAuthError] = useState('');
 
   // Forces a re-read of getUserXp below whenever the logged-in user's own
   // xp changes. This header stays mounted across every route, including
@@ -87,14 +89,20 @@ function AuthPanel() {
     return unsubscribe;
   }, [loggedInAs]);
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
     const trimmed = usernameInput.trim();
     if (!trimmed) {
       return;
     }
-    login(trimmed);
-    setUsernameInput('');
+    const result = await login(trimmed, passwordInput);
+    if (result.ok) {
+      setUsernameInput('');
+      setPasswordInput('');
+      setAuthError('');
+    } else {
+      setAuthError(result.error);
+    }
   }
 
   function handleLogout() {
@@ -147,8 +155,17 @@ function AuthPanel() {
 
         <div className="field">
           <label htmlFor="password">Password</label>
-          <input type="password" id="password" name="password" placeholder="Password" />
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="Password"
+            value={passwordInput}
+            onChange={(event) => setPasswordInput(event.target.value)}
+          />
         </div>
+
+        {authError && <p className="field-error" role="alert">{authError}</p>}
 
         <button type="submit" id="login-btn">Login</button>
       </form>

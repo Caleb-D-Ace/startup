@@ -19,32 +19,53 @@ export function AuthProvider({ children }) {
   // depends on it to know when to re-read the saved pixels.
   const [avatarVersion, setAvatarVersion] = useState(0);
 
+  // The httpOnly auth cookie is the real source of truth now, not
+  // localStorage -- ask the server who (if anyone) it belongs to.
   useEffect(() => {
-    const saved = localStorage.getItem('paintwall-username');
-    if (saved) {
-      setUsername(saved);
-    }
+    fetch('/api/user/me')
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        if (data) {
+          setUsername(data.username);
+        }
+      })
+      .catch(() => {
+        // service unreachable -- just stay logged out client-side
+      });
   }, []);
 
   function notifyAvatarChanged() {
     setAvatarVersion((v) => v + 1);
   }
 
-  function login(name) {
-    try {
-      localStorage.setItem('paintwall-username', name);
-    } catch {
-      // localStorage full or unavailable -- fine for a mock, login just
-      // won't persist across a reload.
+  // One login button doubles as register: try to create the account first,
+  // and only fall back to a real login call if that username is already
+  // taken. Matches the two conventional auth endpoints on the server --
+  // no special merged "create-or-login" endpoint needed.
+  async function login(name, password) {
+    const headers = { 'Content-Type': 'application/json' };
+    const body = JSON.stringify({ username: name, password });
+
+    let response = await fetch('/api/auth/create', { method: 'POST', headers, body });
+    if (response.status === 409) {
+      response = await fetch('/api/auth/login', { method: 'POST', headers, body });
     }
-    setUsername(name);
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      return { ok: false, error: data.msg || 'Login failed' };
+    }
+
+    const data = await response.json();
+    setUsername(data.username);
+    return { ok: true };
   }
 
-  function logout() {
+  async function logout() {
     try {
-      localStorage.removeItem('paintwall-username');
+      await fetch('/api/auth/logout', { method: 'DELETE' });
     } catch {
-      // fine for a mock
+      // service unreachable -- still clear client-side state below
     }
     setUsername(null);
   }
