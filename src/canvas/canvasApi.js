@@ -206,51 +206,35 @@ export function clearCanvas() {
  * Submits a finished stroke, or one chunk of a longer one (PaintCanvas
  * flushes every CHUNK_DISTANCE_PX/CHUNK_TIME_MS rather than waiting for the
  * whole drag -- this function doesn't know or care which):
- * { points: [{x, y}, ...], shape, size, paletteIndex, username }.
- * Expands the raw path into actual pixels via rasterizeStroke -- the real
- * server will do this same rasterization step (see the README's
- * stroke-batching plan) -- then persists and broadcasts the result to
- * subscribers. Returns the resolved pixel list.
- *
- * Every resolved pixel also adds 1 xp to the painting user's lifetime
- * total, repaints included -- repainting an already-painted cell earns the
- * same xp as a blank one, deliberately. Ranking by *current* wall
- * ownership instead would make painting over someone else's work the
- * optimal strategy (it steals their standing); lifetime xp is purely
- * additive, so there's no such incentive.
+ * { points: [{x, y}, ...], shape, size, paletteIndex }. No username -- the
+ * server derives the painter from the auth cookie, not anything the client
+ * claims. Returns the server's { pixels, username, xp, level }.
  */
-export function submitStroke(stroke) {
-  const grid = loadGrid();
-  const paintedAt = Date.now();
-  const cells = rasterizeStroke(stroke, CANVAS_WIDTH, CANVAS_HEIGHT);
-
-  const pixels = cells.map(({ x, y }) => {
-    grid[`${x},${y}`] = { paletteIndex: stroke.paletteIndex, username: stroke.username, paintedAt };
-    return { x, y, paletteIndex: stroke.paletteIndex, username: stroke.username };
+export async function submitStroke(stroke) {
+  const response = await fetch("/api/wall/strokes", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(stroke),
   });
+  const result = await response.json();
+  const { pixels, username } = result;
 
-  if (pixels.length > 0) {
-    addXp(stroke.username, pixels.length);
-  }
-
-  scheduleSave();
-  notify({ type: "stroke", pixels, username: stroke.username });
+  notify({ type: "stroke", pixels, username });
 
   // One activity message per submission, throttled per username -- real
-  // strokes and the fake-peer stroke below share this same path rather
-  // than each building their own message. Only the notification is
-  // skipped when throttled; painting, persistence, and xp above still run.
+  // strokes and the fake-peer stroke above share this same path rather
+  // than each building their own message.
   if (pixels.length > 0) {
     const now = Date.now();
-    const lastNotifiedAt = lastActivityAt.get(stroke.username) ?? 0;
+    const lastNotifiedAt = lastActivityAt.get(username) ?? 0;
     if (now - lastNotifiedAt >= ACTIVITY_THROTTLE_MS) {
-      lastActivityAt.set(stroke.username, now);
+      lastActivityAt.set(username, now);
       const { x, y } = pixels[0];
-      notify({ type: "activity", username: stroke.username, message: `${stroke.username} painted near (${x}, ${y})` });
+      notify({ type: "activity", username, message: `${username} painted near (${x}, ${y})` });
     }
   }
 
-  return pixels;
+  return result;
 }
 
 /** { paletteIndex, username, paintedAt } for one pixel, or null if unpainted. */

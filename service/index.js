@@ -137,10 +137,11 @@ apiRouter.get('/wall/pixel/:x/:y', (req, res) => {
 });
 
 // Submit a stroke. Protected -- painting requires a logged-in identity,
-// which the server now derives from the auth token instead of trusting a
-// client-supplied username. Should rasterize the stroke, write the
-// resulting pixels into in-memory wall state, add xp to req.user, and
-// respond with { pixels, xp, level }.
+// which the server derives from the auth token instead of trusting a
+// client-supplied username. Rasterizes, writes into in-memory wall state,
+// adds xp to req.user, and responds with { pixels, username, xp, level } --
+// username is included at the top level (not just per-pixel) so the
+// response is still meaningful when a stroke rasterizes to zero pixels.
 apiRouter.post('/wall/strokes', verifyAuth, async (req, res) => {
   const { points, shape, size, paletteIndex } = req.body;
   if (!Array.isArray(points)) {
@@ -164,7 +165,7 @@ apiRouter.post('/wall/strokes', verifyAuth, async (req, res) => {
   req.user.xp = (req.user.xp ?? 0) + pixels.length;
   req.user.lastActive = paintedAt;
 
-  res.send({ pixels, xp: req.user.xp, level: getLevel(req.user.xp) });
+  res.send({ pixels, username: req.user.username, xp: req.user.xp, level: getLevel(req.user.xp) });
 });
 
 // Clears the wall. Protected -- powers the existing "Clear Canvas" testing

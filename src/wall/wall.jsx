@@ -31,7 +31,7 @@ const SUGGESTION_DEBOUNCE_MS = 400; // avoids firing a request per intermediate 
 const ACTIVITY_FEED_LIMIT = 15; // most-recent-first, capped so a long session doesn't grow this list unboundedly
 
 export function Wall() {
-  const { username } = useAuth();
+  const { username, updateXp } = useAuth();
   const [brushColor, setBrushColor] = useState(DEFAULT_BRUSH_COLOR);
   const [brushSize, setBrushSize] = useState(DEFAULT_BRUSH_SIZE);
   const [tool, setTool] = useState('brush'); // 'brush' | 'selection'
@@ -220,8 +220,9 @@ export function Wall() {
     setBrushColor(hexToPaletteIndex(hex));
   }
 
-  function handleStrokeChunk(chunk) {
-    submitStroke({ ...chunk, username: username ?? 'anon_guest' });
+  async function handleStrokeChunk(chunk) {
+    const { xp, level } = await submitStroke(chunk);
+    updateXp(xp, level);
   }
 
   // A confirm() guard since this wipes the shared wall for everyone, not
