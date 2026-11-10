@@ -213,6 +213,63 @@ Beyond the basics already listed in the Technologies section (register/login/log
 - **Avatar API** - `POST /api/avatar` (save a finished avatar) / `GET /api/avatar/:username` (fetch one) - closes the loop on the leaderboard's avatar images, which are currently just a placeholder.
 - **Leaderboard/stats API** - `GET /api/leaderboard?period=day|week|all` and `GET /api/users/:username/stats` (pixel count, level, XP) - formalizes what `artists.html`/`artists.jsx` and the profile page's stats panel already assume exists.
 
+#### Service plan (grounded in the Simon reference, supersedes the brainstorm above)
+
+The real DB deliverable is next, so everything server-side for this pass stays **in-memory** (`let users = []`, lost on restart - matching the course's own Simon Service reference exactly). Scope: auth, wall pixel data, and XP/leaderboard move server-side now, since XP is computed directly from stroke submissions and splitting it from the wall endpoint would leave one logical action straddling two authority layers. Avatars, quick-swatches, and the fake-peer "live activity" simulation stay client-mocked a while longer - the fake-peer system was always an explicit stand-in for the later WebSocket deliverable, so it keeps writing into the same local pub-sub it always has.
+
+```mermaid
+sequenceDiagram
+    participant B as Browser (React)
+    participant E as Express (service/index.js)
+    participant U as In-memory users[]
+    participant W as In-memory wall state
+
+    rect rgb(235, 245, 255)
+    Note over B,U: Register
+    B->>E: POST /api/auth/create { username, password }
+    E->>E: bcrypt.hash(password, 10)
+    E->>U: push { username, passwordHash, token: uuid() }
+    E-->>B: 200 { username } + Set-Cookie: token (httpOnly)
+    end
+
+    rect rgb(235, 255, 240)
+    Note over B,U: Login
+    B->>E: POST /api/auth/login { username, password }
+    E->>U: find user by username
+    E->>E: bcrypt.compare(password, passwordHash)
+    alt credentials valid
+        E->>U: user.token = uuid()
+        E-->>B: 200 { username } + Set-Cookie: token (httpOnly)
+    else invalid
+        E-->>B: 401 { msg: "Unauthorized" }
+    end
+    end
+
+    rect rgb(255, 245, 230)
+    Note over B,W: Authenticated action: submit a stroke
+    B->>E: POST /api/wall/strokes { points, shape, size, paletteIndex }<br/>Cookie: token
+    E->>U: verifyAuth: find user by token
+    alt token valid
+        E->>E: rasterize stroke -> pixel cells
+        E->>W: write cells by coordinate key, add xp for cells painted
+        E-->>B: 200 { pixels, xp, level }
+    else token missing/invalid
+        E-->>B: 401 { msg: "Unauthorized" }
+    end
+    end
+
+    rect rgb(255, 235, 235)
+    Note over B,U: Logout
+    B->>E: DELETE /api/auth/logout  Cookie: token
+    E->>U: user.token = null
+    E-->>B: 204 + Clear-Cookie: token
+    end
+
+    Note over B,W: Unauthenticated reads (page load, leaderboard)<br/>GET /api/wall, GET /api/leaderboard -- no cookie required
+```
+
+Endpoints: `POST /api/auth/create`, `POST /api/auth/login`, `DELETE /api/auth/logout` (naming matches Simon's reference exactly), plus `GET /api/wall` (public), `POST /api/wall/strokes` (protected, identity comes from the token rather than a client-supplied username), `DELETE /api/wall` (protected, powers the existing Clear Canvas testing button), and `GET /api/leaderboard` (public).
+
 ## 🚀 DB deliverable
 
 For this deliverable I did the following. I checked the box `[x]` and added a description for things I completed.
