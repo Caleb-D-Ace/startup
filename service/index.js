@@ -11,11 +11,23 @@ app.use(cookieParser());
 
 const authCookieName = 'token';
 
+// Duplicated from canvasApi.js rather than imported -- that module touches
+// window/localStorage and would crash under Node. These two numbers are
+// simple enough that copying them carries far less drift risk than
+// reimplementing the actual rasterization algorithm would.
+const CANVAS_WIDTH = 854;
+const CANVAS_HEIGHT = 480;
+
 // Create our empty lists for temp storage
 const users = [];
 
 // Every currently-painted pixel, keyed "x,y" -> { paletteIndex, username,
 // paintedAt }. Sparse on purpose -- most of an 854x480 wall stays unpainted.
+//
+// TODO(DB deliverable): once users live in a real table with an id, store
+// that int here instead of the username string -- a username repeats at
+// every pixel it painted, so interning it to a small int saves thousands of
+// bytes across a painted wall.
 const wallState = {};
 
 function getUserByUsername(username) {
@@ -102,8 +114,6 @@ apiRouter.get('/user/me', verifyAuth, (req, res) => {
   res.send({ username: req.user.username });
 });
 
-// --- Stubs below: signatures/routes only, not implemented yet ---
-
 // Current wall pixel state, for initial page load. Public -- anyone can
 // view the wall, logged in or not.
 apiRouter.get('/wall', (req, res) => {
@@ -115,8 +125,29 @@ apiRouter.get('/wall', (req, res) => {
 // client-supplied username. Should rasterize the stroke, write the
 // resulting pixels into in-memory wall state, add xp to req.user, and
 // respond with { pixels, xp, level }.
-apiRouter.post('/wall/strokes', verifyAuth, (req, res) => {
-  res.status(501).send({ msg: 'Not implemented yet' });
+apiRouter.post('/wall/strokes', verifyAuth, async (req, res) => {
+  const { points, shape, size, paletteIndex } = req.body;
+  if (!Array.isArray(points)) {
+    return res.status(400).send({ msg: 'points required' });
+  }
+
+  // Dynamic import -- these are ES modules shared with the frontend, loaded
+  // from a CommonJS file. Node caches the module after the first call, so
+  // this isn't a disk read per stroke.
+  const { rasterizeStroke } = await import('../src/canvas/brush.js');
+  const { getLevel } = await import('../src/canvas/xp.js');
+
+  const cells = rasterizeStroke({ points, shape, size }, CANVAS_WIDTH, CANVAS_HEIGHT);
+  const paintedAt = Date.now();
+
+  const pixels = cells.map(({ x, y }) => {
+    wallState[`${x},${y}`] = { paletteIndex, username: req.user.username, paintedAt };
+    return { x, y, paletteIndex, username: req.user.username };
+  });
+
+  req.user.xp = (req.user.xp ?? 0) + pixels.length;
+
+  res.send({ pixels, xp: req.user.xp, level: getLevel(req.user.xp) });
 });
 
 // Clears the wall. Protected -- powers the existing "Clear Canvas" testing
