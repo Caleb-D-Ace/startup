@@ -231,8 +231,9 @@ export function submitStroke(stroke) {
 }
 
 /** { paletteIndex, username, paintedAt } for one pixel, or null if unpainted. */
-export function getPixelOwner(x, y) {
-  return loadGrid()[`${x},${y}`] ?? null;
+export async function getPixelOwner(x, y) {
+  const response = await fetch(`/api/wall/pixel/${x}/${y}`);
+  return response.json();
 }
 
 /**

@@ -120,6 +120,12 @@ apiRouter.get('/wall', (req, res) => {
   res.send(wallState);
 });
 
+// Get the currently selected pixel
+apiRouter.get('/wall/pixel/:x/:y', (req, res) => {
+  const { x, y } = req.params;
+  res.json(wallState[`${x},${y}`] ?? null);
+});
+
 // Submit a stroke. Protected -- painting requires a logged-in identity,
 // which the server now derives from the auth token instead of trusting a
 // client-supplied username. Should rasterize the stroke, write the

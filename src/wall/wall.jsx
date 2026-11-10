@@ -213,8 +213,8 @@ export function Wall() {
     }
   }
 
-  function handleInspectPixel({ x, y, clientX, clientY }) {
-    setInspectedPixel({ x, y, clientX, clientY, owner: getPixelOwner(x, y) });
+  async function handleInspectPixel({ x, y, clientX, clientY }) {
+    setInspectedPixel({ x, y, clientX, clientY, owner: await getPixelOwner(x, y) });
   }
 
   function handleCloseInspector() {
