@@ -195,80 +195,15 @@ flowchart TB
 
 For this deliverable I did the following. I checked the box `[x]` and added a description for things I completed.
 
-- [ ] I completed the prerequisites for this deliverable (Simon deployed, GitHub link, Git commits)
-- [ ] **Node.js/Express HTTP service** - I did not complete this part of the deliverable.
-- [ ] **Static middleware for frontend** - I did not complete this part of the deliverable.
-- [ ] **Calls to third party endpoints** - I did not complete this part of the deliverable.
-- [ ] **Backend service endpoints** - I did not complete this part of the deliverable.
-- [ ] **Frontend calls service endpoints** - I did not complete this part of the deliverable.
-- [ ] **Supports registration, login, logout, and restricted endpoint** - I did not complete this part of the deliverable.
-- [ ] **Uses BCrypt to hash passwords** - I did not complete this part of the deliverable.
+- [X] I completed the prerequisites for this deliverable (Simon deployed, GitHub link, Git commits)
+- [X] **Node.js/Express HTTP service** - Node.js and express are both implemented to ensure proper http functionality.
+- [X] **Static middleware for frontend** - `service/index.js` accesses the frontend using `app.use(express.static('public'))`.
+- [X] **Calls to third party endpoints** - Carried over from the React Part 2 deliverable: `colorApi.js` calls TheColorAPI (`thecolorapi.com`) directly from the browser for the wall's color-suggestion panel. No backend code needed there since TheColorAPI allows CORS from anywhere. Makes my life a lot easier.
+- [X] **Backend service endpoints** - Auth (`POST /api/auth/create`, `POST /api/auth/login`, `DELETE /api/auth/logout`, `GET /api/user/me`) and the wall (`GET /api/wall`, `GET /api/wall/pixel/:x/:y`, `POST /api/wall/strokes`, `DELETE /api/wall`, `GET /api/leaderboard`). Hooray endpoints.
+- [X] **Frontend calls service endpoints** - `AuthContext.jsx` and `canvasApi.js` now use `fetch` instead of reading/writing from/to `localStorage` directly. Avatars and quick-swatch color picks are the one deliberate exception because those are bulky and heavily reliant on the database implementation.
+- [X] **Supports registration, login, logout, and restricted endpoint** - Registration and login endpoints created, but they share the same button: the frontend tries `create` first and falls back to `login` on a 409 (username taken), so it still only takes one click either way. `POST /api/wall/strokes` is blocked if no auth cookie exists.
+- [X] **Uses BCrypt to hash passwords** - `bcryptjs` hashes the password when registration happens, and compares password hashes when logging in. Passwords are actually optional here but when used, they're hashed.
 
-#### Tentative API plan (brainstormed ahead of implementation, saved here so it isn't lost)
-
-Beyond the basics already listed in the Technologies section (register/login/logout, canvas state, pixel ownership lookup, color suggestions), a few more API groups worth building:
-
-- **Canvas API** - `GET /api/canvas` (current state), `POST /api/canvas/stroke` (submit a batched stroke; server rasterizes it, resolves the affected pixels, and is what triggers the WebSocket broadcast), `GET /api/canvas/pixel/:x/:y` (ownership lookup). Stretch idea: `GET /api/canvas/replay` - the ordered history of committed strokes, so the frontend could animate a timelapse of how the wall got painted.
-- **Palette/quantization API** - since painted pixels store a palette index rather than an arbitrary RGB value, the color-matching math belongs on the server, not duplicated in the browser: `GET /api/palette` (serves the canonical 32-color list, one source of truth instead of being duplicated in the client bundle) and `GET /api/palette/suggestions?base=<hex>` (calls TheColorAPI for a scheme *and* quantizes every result to the nearest palette entry before returning it, in one round trip - the frontend never touches raw color math or an un-paintable hex).
-- **Avatar API** - `POST /api/avatar` (save a finished avatar) / `GET /api/avatar/:username` (fetch one) - closes the loop on the leaderboard's avatar images, which are currently just a placeholder.
-- **Leaderboard/stats API** - `GET /api/leaderboard?period=day|week|all` and `GET /api/users/:username/stats` (pixel count, level, XP) - formalizes what `artists.html`/`artists.jsx` and the profile page's stats panel already assume exists.
-
-#### Service plan (grounded in the Simon reference, supersedes the brainstorm above)
-
-The real DB deliverable is next, so everything server-side for this pass stays **in-memory** (`let users = []`, lost on restart - matching the course's own Simon Service reference exactly). Scope: auth, wall pixel data, and XP/leaderboard move server-side now, since XP is computed directly from stroke submissions and splitting it from the wall endpoint would leave one logical action straddling two authority layers. Avatars, quick-swatches, and the fake-peer "live activity" simulation stay client-mocked a while longer - the fake-peer system was always an explicit stand-in for the later WebSocket deliverable, so it keeps writing into the same local pub-sub it always has.
-
-```mermaid
-sequenceDiagram
-    participant B as Browser (React)
-    participant E as Express (service/index.js)
-    participant U as In-memory users[]
-    participant W as In-memory wall state
-
-    rect rgb(235, 245, 255)
-    Note over B,U: Register
-    B->>E: POST /api/auth/create { username, password }
-    E->>E: bcrypt.hash(password, 10)
-    E->>U: push { username, passwordHash, token: uuid() }
-    E-->>B: 200 { username } + Set-Cookie: token (httpOnly)
-    end
-
-    rect rgb(235, 255, 240)
-    Note over B,U: Login
-    B->>E: POST /api/auth/login { username, password }
-    E->>U: find user by username
-    E->>E: bcrypt.compare(password, passwordHash)
-    alt credentials valid
-        E->>U: user.token = uuid()
-        E-->>B: 200 { username } + Set-Cookie: token (httpOnly)
-    else invalid
-        E-->>B: 401 { msg: "Unauthorized" }
-    end
-    end
-
-    rect rgb(255, 245, 230)
-    Note over B,W: Authenticated action: submit a stroke
-    B->>E: POST /api/wall/strokes { points, shape, size, paletteIndex }<br/>Cookie: token
-    E->>U: verifyAuth: find user by token
-    alt token valid
-        E->>E: rasterize stroke -> pixel cells
-        E->>W: write cells by coordinate key, add xp for cells painted
-        E-->>B: 200 { pixels, xp, level }
-    else token missing/invalid
-        E-->>B: 401 { msg: "Unauthorized" }
-    end
-    end
-
-    rect rgb(255, 235, 235)
-    Note over B,U: Logout
-    B->>E: DELETE /api/auth/logout  Cookie: token
-    E->>U: user.token = null
-    E-->>B: 204 + Clear-Cookie: token
-    end
-
-    Note over B,W: Unauthenticated reads (page load, leaderboard)<br/>GET /api/wall, GET /api/leaderboard -- no cookie required
-```
-
-Endpoints: `POST /api/auth/create`, `POST /api/auth/login`, `DELETE /api/auth/logout` (naming matches Simon's reference exactly), plus `GET /api/wall` (public), `POST /api/wall/strokes` (protected, identity comes from the token rather than a client-supplied username), `DELETE /api/wall` (protected, powers the existing Clear Canvas testing button), and `GET /api/leaderboard` (public).
 
 ## 🚀 DB deliverable
 
