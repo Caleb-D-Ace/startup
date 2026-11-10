@@ -107,4 +107,20 @@ Project notes:
 ## HTTP Service
 - Express is a library that enables your application to double as the web service. Libraries such as Express enable built-in web support and endpoint creation.
 - Web servers use ports to enable access to multiple services at once. Use a reverse proxy (service gateway) to distribute requests from web services to the proper ports. This is kind of like a router.
-- 
+- I'll be real I do know a lot of the basic http protocol. Further notes to come, but it's pretty straightforward at this point.
+- Remember that you can make http requests in the terminal with this command (ft. a placeholder url):
+`curl -v -s http://info.cern.ch/hypertext/WWW/Helping.html`
+- HTTP verbs: GET, PUT, POST, DELETE, OPTIONS
+- Status codes: 1xx - info, 2xx - success, 3xx - Redirect, 4xx - Client error, 5xx - Server error
+- Whenever you update an endpoint, make sure to build on functionality rather than replace functionality so as not to break older applications.
+- REST HTTP requests always act upon a resource
+- GraphQL builds a query to request a large json response with all the needed data formatted as the request dictates.
+`query {
+  getOrder(id: "2197") {
+    orders(filter: { date: { allofterms: "20220505" } }) {
+      store
+      description
+      orderedBy
+    }
+  }
+}`
