@@ -172,6 +172,7 @@ apiRouter.post('/wall/strokes', verifyAuth, async (req, res) => {
 // button.
 apiRouter.delete('/wall', verifyAuth, (req, res) => {
   Object.keys(wallState).forEach(k => delete wallState[k]);
+  res.status(204).end();
 });
 
 // Leaderboard. Public, reads from the same in-memory xp data strokes write

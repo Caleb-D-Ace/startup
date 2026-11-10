@@ -235,9 +235,10 @@ export function Wall() {
   // scroll-focused-element-into-view behavior can shove the page down
   // hundreds of pixels to do that -- scrolling the now-cleared canvas
   // half off-screen. scrollIntoView pulls it back immediately after.
-  function handleClearCanvas() {
+  async function handleClearCanvas() {
+    // Handy dandy line to make sure that the user is desirous to clear the canvas. This entire method will die in the final product.
     if (window.confirm('Clear the entire wall? This cannot be undone.')) {
-      clearCanvas();
+      await clearCanvas();
       document.getElementById('paintwall-canvas')?.scrollIntoView({ block: 'nearest' });
     }
   }

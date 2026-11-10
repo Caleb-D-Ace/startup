@@ -194,11 +194,22 @@ export async function fetchCanvasState() {
 /**
  * Wipes every painted pixel. For testing/demoing, not a regular end-user
  * feature. Leaves xp alone -- it's lifetime, not tied to the canvas's
- * current contents (see submitStroke's doc comment).
+ * current contents. Only notifies on success -- an irreversible,
+ * all-users-affecting action shouldn't show as cleared locally if the
+ * request actually failed.
  */
-export function clearCanvas() {
-  gridCache = {};
-  flushSave();
+export async function clearCanvas() {
+  const response = await fetch("/api/wall", { method: "DELETE" });
+  if (!response.ok) {
+    return;
+  }
+  // Keep the stale-while-revalidate cache in sync too, or a reload before
+  // the next fetchCanvasState() would briefly repaint the pixels just cleared.
+  try {
+    localStorage.setItem(CANVAS_CACHE_KEY, JSON.stringify({}));
+  } catch {
+    // fine -- just means the next load won't have a warm cache
+  }
   notify({ type: "clear" });
 }
 
