@@ -104,10 +104,9 @@ function notify(event) {
   subscribers.forEach((callback) => callback(event));
 }
 
-// Stale-while-revalidate cache of the last-fetched server wall state --
-// separate from CANVAS_STORAGE_KEY, the old mock grid submitStroke/
-// clearCanvas still use. Lets the wall paint instantly on mount instead of
-// waiting on a fetch, then silently swap to the real state (see wall.jsx).
+// Stale-while-revalidate cache of the last-fetched server wall state. Lets
+// the wall paint instantly on mount instead of waiting on a fetch, then
+// silently swap to the real state (see wall.jsx).
 const CANVAS_CACHE_KEY = "paintwall-canvas-cache";
 
 /** Last-known wall state from the previous fetchCanvasState() call, or {} if none yet. */
@@ -239,7 +238,7 @@ export function loadAvatar(username) {
 // username that was tracked *first* is evicted when a new one arrives,
 // regardless of how recently that first one was actually used. Simple, and
 // the stated cost (an idle username can eventually lose its data) is an
-// accepted tradeoff, not a bug. Shared by quick swatches and XP below.
+// accepted tradeoff, not a bug.
 function createPerUserStore(storageKeyPrefix, usersListKey, maxUsers) {
   function loadTrackedUsers() {
     try {
@@ -301,19 +300,6 @@ export function saveQuickSwatches(username, paletteIndices) {
 /** @param {string} username  @returns {number[] | null} */
 export function loadQuickSwatches(username) {
   return quickSwatchStore.load(username);
-}
-
-// XP standing is more consequential to a user than their swatch picks --
-// losing a quick-swatch list to the FIFO cap is a shrug, losing your
-// leaderboard spot isn't -- so this gets a much larger cap to make evicting
-// an actual active/high-scoring user far less likely in practice, without
-// bothering to make eviction XP-aware (unnecessary complexity for a mock).
-const MAX_XP_TRACKED_USERS = 50;
-const xpStore = createPerUserStore("paintwall-xp-", "paintwall-xp-users", MAX_XP_TRACKED_USERS);
-
-/** @returns {{xp: number, lastActive: number}} */
-export function getUserXp(username) {
-  return xpStore.load(username) ?? { xp: 0, lastActive: null };
 }
 
 /**
