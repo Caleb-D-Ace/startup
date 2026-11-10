@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { BrushColorControl, DEFAULT_BRUSH_COLOR } from '../canvas/BrushColorControl';
 import { PaintCanvas, drawPixels } from '../canvas/PaintCanvas';
 import {
-  getCanvasState,
+  getCanvasStateCache,
+  fetchCanvasState,
   getPixelOwner,
   subscribe,
   submitStroke,
@@ -15,6 +16,14 @@ import {
 import { MIN_BRUSH_SIZE, MAX_BRUSH_SIZE } from '../canvas/brush';
 import { getColorSuggestions, jitterHex } from '../canvas/colorApi';
 import { useAuth } from '../AuthContext';
+
+// Shared by the cache-seeded render and the post-fetch replacement.
+function gridToPixels(grid) {
+  return Object.entries(grid).map(([key, value]) => {
+    const [x, y] = key.split(',').map(Number);
+    return { x, y, paletteIndex: value.paletteIndex };
+  });
+}
 
 const DEFAULT_BRUSH_SIZE = 5;
 const BRUSH_SHAPE = 'round'; // only shape implemented so far -- brush-style select below isn't wired to this yet
@@ -109,16 +118,13 @@ export function Wall() {
 
   // Held in a ref, mutated in place via push(), rather than React state --
   // a chunk commits every ~28px/250ms while dragging, and rebuilding this
-  // from scratch on every one of those scales with the entire session's
-  // painted history instead of just what's new. Seeded synchronously here
-  // (not in a useEffect) so existing history is visible on the first paint.
+  // from scratch on every one scales with the whole session's history
+  // instead of just what's new. Seeded synchronously from a cached
+  // snapshot (not a real fetch) so history is visible on the first paint;
+  // the effect below swaps in the real fetched state once it resolves.
   const pixelsRef = useRef(null);
   if (pixelsRef.current === null) {
-    const grid = getCanvasState();
-    pixelsRef.current = Object.entries(grid).map(([key, value]) => {
-      const [x, y] = key.split(',').map(Number);
-      return { x, y, paletteIndex: value.paletteIndex };
-    });
+    pixelsRef.current = gridToPixels(getCanvasStateCache());
   }
 
   // pixelsRef.current is always the same array object (mutated, not
@@ -126,6 +132,28 @@ export function Wall() {
   // reference the way it normally would with React data -- this version
   // counter is the actual change signal instead.
   const [pixelsVersion, setPixelsVersion] = useState(0);
+
+  // Bumped alongside pixelsVersion on a full replacement (not an append) --
+  // PaintCanvas's resetToken, so it redraws fully even when the
+  // replacement isn't shorter than what's already drawn.
+  const [wallResetToken, setWallResetToken] = useState(0);
+
+  // The cached seed above may be stale or empty -- fetch the real wall
+  // once on mount and swap it in.
+  useEffect(() => {
+    let cancelled = false;
+    fetchCanvasState().then((grid) => {
+      if (cancelled) {
+        return;
+      }
+      pixelsRef.current = gridToPixels(grid);
+      setPixelsVersion((v) => v + 1);
+      setWallResetToken((t) => t + 1);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Distinct usernames seen this session (real strokes and simulated
   // fake-peer ones alike), including yourself -- there's no real presence
@@ -299,6 +327,7 @@ export function Wall() {
             height={CANVAS_HEIGHT}
             pixels={pixelsRef.current}
             pixelsVersion={pixelsVersion}
+            resetToken={wallResetToken}
             brush={brush}
             tool={effectiveTool}
             onStrokeChunk={handleStrokeChunk}

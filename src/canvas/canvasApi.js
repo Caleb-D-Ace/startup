@@ -163,9 +163,32 @@ function notify(event) {
   subscribers.forEach((callback) => callback(event));
 }
 
-/** Every currently-painted pixel, as { "x,y": { paletteIndex, username, paintedAt } }. */
-export function getCanvasState() {
-  return loadGrid();
+// Stale-while-revalidate cache of the last-fetched server wall state --
+// separate from CANVAS_STORAGE_KEY, the old mock grid submitStroke/
+// clearCanvas still use. Lets the wall paint instantly on mount instead of
+// waiting on a fetch, then silently swap to the real state (see wall.jsx).
+const CANVAS_CACHE_KEY = "paintwall-canvas-cache";
+
+/** Last-known wall state from the previous fetchCanvasState() call, or {} if none yet. */
+export function getCanvasStateCache() {
+  try {
+    const raw = localStorage.getItem(CANVAS_CACHE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+/** The real wall state, fetched from the server -- also refreshes the cache. */
+export async function fetchCanvasState() {
+  const response = await fetch("/api/wall");
+  const grid = await response.json();
+  try {
+    localStorage.setItem(CANVAS_CACHE_KEY, JSON.stringify(grid));
+  } catch {
+    // fine -- just means the next load won't have a warm cache
+  }
+  return grid;
 }
 
 /**

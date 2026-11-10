@@ -55,14 +55,17 @@ export function drawPixels(ctx, pixels, startIndex = 0) {
  *   ever push new entries onto the same array (never reorder it or mutate
  *   an existing entry), pairing each push with a bump to `pixelsVersion`.
  *   That's what lets this component pick up exactly where it left off on
- *   most updates instead of re-scanning the whole thing. The one exception
- *   is a full reset (e.g. "Clear Canvas"): swap `pixels` for a new, shorter
- *   array and bump `pixelsVersion` -- a shrink is detected below and wipes
- *   the canvas before redrawing, instead of trying to append negatively.
+ *   most updates instead of re-scanning the whole thing. For a full reset
+ *   (new array, not an append), bump `pixelsVersion` and `resetToken` -- a
+ *   shrink alone is detected below, but resetToken also catches a
+ *   same-size-or-larger replacement.
  * @param {number} pixelsVersion - increments whenever `pixels` gets new
  *   entries appended. `pixels` itself is a stable array reference (mutated
  *   in place by the parent, not replaced), so this is the actual change
  *   signal -- React wouldn't otherwise notice anything happened.
+ * @param {number} [resetToken] - bump alongside pixelsVersion on a full
+ *   replacement, so a redraw happens even when it isn't shorter. Defaults
+ *   to 0; omit if a caller never replaces wholesale.
  * @param {{shape:string, size:number, paletteIndex:number}} brush - current tool config
  * @param {'brush'|'selection'} [tool] - defaults to 'brush'.
  * @param {(chunk: {points:{x:number,y:number}[], shape:string, size:number, paletteIndex:number}) => void} onStrokeChunk
@@ -72,7 +75,7 @@ export function drawPixels(ctx, pixels, startIndex = 0) {
  *   popover there without having to re-derive it.
  * @param {React.ReactNode} [children] - fallback content for browsers without canvas support
  */
-export function PaintCanvas({ id, width, height, pixels, pixelsVersion, brush, tool = 'brush', onStrokeChunk, onInspectPixel, children }) {
+export function PaintCanvas({ id, width, height, pixels, pixelsVersion, resetToken = 0, brush, tool = 'brush', onStrokeChunk, onInspectPixel, children }) {
   const canvasRef = useRef(null);
 
   // In-progress drag state, kept out of useState since it's never rendered
@@ -86,13 +89,15 @@ export function PaintCanvas({ id, width, height, pixels, pixelsVersion, brush, t
   const panRef = useRef(null); // { startClientX, startClientY, lastClientX, lastClientY, scrollEl, moved }
 
   const drawnCountRef = useRef(0);
+  const lastResetTokenRef = useRef(resetToken);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
-    if (pixels.length < drawnCountRef.current) {
-      // pixels was reset, not appended to -- wipe the bitmap and redraw
-      // from scratch, since incremental drawing can't handle a shrink.
+    const explicitReset = resetToken !== lastResetTokenRef.current;
+    lastResetTokenRef.current = resetToken;
+    if (explicitReset || pixels.length < drawnCountRef.current) {
+      // Full reset, not an append -- wipe and redraw from scratch.
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       drawnCountRef.current = 0;
     }
@@ -101,7 +106,7 @@ export function PaintCanvas({ id, width, height, pixels, pixelsVersion, brush, t
     // pixels is a stable, mutated-in-place reference -- pixelsVersion is
     // the real dependency; see the prop docs above.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pixelsVersion]);
+  }, [pixelsVersion, resetToken]);
 
   function canvasPointFromEvent(event) {
     const canvas = canvasRef.current;
