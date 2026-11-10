@@ -4,21 +4,20 @@ import { getLeaderboard, subscribe } from '../canvas/canvasApi';
 import { getLevel } from '../canvas/xp';
 
 export function Artists() {
-  const [leaderboard, setLeaderboard] = useState(() => getLeaderboard());
+  const [leaderboard, setLeaderboard] = useState([]);
 
-  // Re-reads the whole (small, bounded-by-MAX_XP_TRACKED_USERS) leaderboard
-  // on every stroke, rather than trying to incrementally patch it client
-  // side -- unlike the wall's pixel grid, this is at most a few dozen
-  // entries, so a full re-fetch is cheap and avoids having to duplicate
-  // canvasApi's own xp/sort logic here. This is also what makes a user's
-  // own name start showing up here live as they paint, without needing to
-  // revisit this page.
+  // Fetches on mount, then again on every throttled 'activity' notification
+  // (at most once per username per 5s -- see ACTIVITY_THROTTLE_MS) rather
+  // than every raw 'stroke' chunk, so an active drag elsewhere doesn't spam
+  // this with a request every ~250ms. Still what makes a user's own name
+  // start showing up here live as they paint, without revisiting the page.
   useEffect(() => {
+    getLeaderboard().then(setLeaderboard);
     const unsubscribe = subscribe((event) => {
-      if (event.type !== 'stroke') {
+      if (event.type !== 'activity') {
         return;
       }
-      setLeaderboard(getLeaderboard());
+      getLeaderboard().then(setLeaderboard);
     });
     return unsubscribe;
   }, []);

@@ -1,20 +1,14 @@
-// Mock "canvas API" for the Reactivity deliverable -- there's no backend yet
-// (that's the Service/DB/WebSocket deliverables), so this module stands in
-// for all three at once: localStorage for persistence, and setInterval to
-// fake other painters' activity (the course's own pattern for mocking what
-// would otherwise be a WebSocket push). Every exported function here is
-// named and shaped the way the real future HTTP/WebSocket API will be --
-// see the README's Canvas API plan -- so swapping the internals out later
-// shouldn't require touching any component that calls it.
+// Canvas API, now a hybrid: wall data (getPixelOwner, submitStroke,
+// getCanvasStateCache/fetchCanvasState, clearCanvas, getLeaderboard) hits
+// the real Express service in service/index.js. Avatars and quick-swatch
+// picks are still mocked via localStorage, and the fake-peer "live
+// activity" simulation below stays purely client-side -- both are
+// stand-ins for work that belongs to a later deliverable (avatars/swatches
+// aren't urgent to migrate; the simulation is an explicit placeholder for
+// real WebSocket pushes), not for the wall itself.
 //
-// Simplification vs. that plan: the real backend stores a dense grid as
-// packed binary and keys pixels by a numeric user ID. This mock stores only
-// the *painted* pixels, sparsely, keyed by "x,y", with the plain username
-// string attached directly -- there's no real DB yet to assign numeric IDs
-// from, and a sparse map is what actually fits in localStorage's ~5MB
-// quota (480p rather than 720p specifically because painting pixel
-// ownership in, which is coming next, means attribution data -- not just
-// color -- now has to survive in that same quota).
+// The real server stores wall state in memory, not yet a database -- that's
+// the next deliverable -- so it's lost on restart, same caveat the mock had.
 
 import { rasterizeStroke } from "./brush";
 
@@ -323,16 +317,13 @@ export function getUserXp(username) {
 }
 
 /**
- * Every tracked username's XP standing, sorted highest first -- "Top
- * Artists" reads straight from this. Only usernames that have painted at
- * least once show up here (same username list the FIFO cap manages), so a
- * user's own name appears the moment they first paint, not before.
+ * Every painter's XP standing, sorted highest first -- "Top Artists" reads
+ * straight from this. Only users who've actually painted show up; the
+ * server excludes anyone with 0 xp.
  */
-export function getLeaderboard() {
-  return xpStore
-    .listUsers()
-    .map((username) => ({ username, ...getUserXp(username) }))
-    .sort((a, b) => b.xp - a.xp);
+export async function getLeaderboard() {
+  const response = await fetch("/api/leaderboard");
+  return response.json();
 }
 
 // ---- Simulated peer activity --------------------------------------------
