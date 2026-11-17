@@ -435,6 +435,18 @@ main {
   margin-right: calc(50% - 50vw);
 }
 
+/* Direct children only -- #canvas-section also holds the toolbar/palette/
+   pixel-inspector paragraphs further down, nested inside their own divs,
+   which should keep their normal left-aligned layout. */
+#canvas-section > h2 {
+  text-align: center;
+  font-weight: bold;
+}
+
+#canvas-section > p {
+  text-align: center;
+}
+
 /* About page: pitch section on the left, Key Features and Technologies
    stacked on the right instead of all three stacking in one column -- less
    scrolling to see everything. Keyed off orientation rather than a width
@@ -798,6 +810,16 @@ main {
    shrinking it. */
 #paintwall-canvas {
   display: block;
+  /* Centers horizontally whenever .canvas-scroll is wider than the canvas's
+     native 854px (the normal desktop case -- it was plain left-aligned
+     before). Auto margins simply resolve to 0 when the canvas is wider
+     than its container instead (narrow viewports), so this doesn't fight
+     .canvas-scroll's overflow:auto panning -- unlike justify-content:
+     center on the scroll container itself would, which has a known
+     cross-browser quirk of making the start-side overflow unreachable by
+     scroll once content doesn't fit, defeating that pan-to-see-the-whole-
+     wall behavior entirely. */
+  margin: 0 auto;
 }
 
 /* Stays a 400x400 square, but shrinks to fit narrow viewports instead of
