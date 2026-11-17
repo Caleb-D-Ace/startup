@@ -23,10 +23,14 @@
 // scroll a div on its own).
 
 import React, { useRef, useEffect } from 'react';
-import { interpolatePoints, CHUNK_DISTANCE_PX, CHUNK_TIME_MS } from './brush';
+import { interpolatePoints, getBrushCells, CHUNK_DISTANCE_PX, CHUNK_TIME_MS } from './brush';
 import { paletteIndexToHex } from './canvasApi';
 
 const SELECTION_DRAG_THRESHOLD_PX = 6; // client (screen) px -- below this, a selection-tool pointer-up counts as a tap, not a pan
+
+// The brush size at which the client switches from a precise stroke display to an
+// approximation of each stroke
+const FAST_PREVIEW_MIN_SIZE = 15;
 
 /**
  * Fills `pixels[startIndex:]` onto `ctx`, one fillRect per pixel. Shared by
@@ -119,26 +123,29 @@ export function PaintCanvas({ id, width, height, pixels, pixelsVersion, resetTok
     };
   }
 
-  // Optimistic live-preview dabs, drawn on every mousemove regardless of
-  // the chunk-flush cadence so the trail never looks segmented. One
-  // ctx.arc() fill per point, rather than looping getBrushCells and
-  // filling each cell individually -- a single native draw call regardless
-  // of brush size, much cheaper than thousands of 1x1 fillRects for a large
-  // brush. This makes the live preview a geometric circle rather than
-  // getBrushCells' exact lattice-point circle, so it can differ by a pixel
-  // or two at a dab's edge from the canonical rasterization -- invisible at
-  // normal sizes, and self-corrects once the chunk's real pixels land.
+  // drawDabs is our live preview method. It draws on the client's canvas so they
+  // can see what they're doing before the server updates with their strokes.
+  // If the brush size is too large, it causes performance issues, so when the brush
+  // size is too large (FAST_PREVIEW_MIN_SIZE) it switches to a more efficient but 
+  // less-accurate approximation of the stroke.
   function drawDabs(points) {
     const ctx = canvasRef.current.getContext('2d');
     ctx.fillStyle = paletteIndexToHex(brush.paletteIndex);
+    const useFastArc = brush.shape === 'round' && brush.size >= FAST_PREVIEW_MIN_SIZE;
     points.forEach(({ x, y }) => {
       if (brush.size === 0) {
         ctx.fillRect(x, y, 1, 1);
         return;
       }
-      ctx.beginPath();
-      ctx.arc(x, y, brush.size, 0, Math.PI * 2);
-      ctx.fill();
+      if (useFastArc) {
+        ctx.beginPath();
+        ctx.arc(x, y, brush.size, 0, Math.PI * 2);
+        ctx.fill();
+        return;
+      }
+      getBrushCells(brush.shape, brush.size, x, y).forEach(({ x: cx, y: cy }) => {
+        ctx.fillRect(cx, cy, 1, 1);
+      });
     });
   }
 
