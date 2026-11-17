@@ -2,3 +2,5 @@ deployFiles.sh
 demovite/
 node_modules/
 dist/
+database.js
+dbConfig.json
