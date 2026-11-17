@@ -26,7 +26,6 @@
   "homepage": "https://github.com/Caleb-D-Ace/startup#readme",
   "dependencies": {
     "bootstrap": "^5.3.8",
-    "mongodb": "^7.9.0",
     "react": "^19.3.0",
     "react-bootstrap": "^2.10.10",
     "react-dom": "^19.3.0",
