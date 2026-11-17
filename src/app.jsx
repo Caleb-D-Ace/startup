@@ -71,6 +71,12 @@ function AuthPanel() {
   const [usernameInput, setUsernameInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [authError, setAuthError] = useState('');
+  // null -- show the Login/Register choice buttons. 'login' | 'register' --
+  // show the username/password form. The form itself still goes through the
+  // same create-then-fallback-to-login call either way (see AuthContext) --
+  // this is purely which buttons are visible, not two different backend
+  // flows.
+  const [authMode, setAuthMode] = useState(null);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -83,13 +89,20 @@ function AuthPanel() {
       setUsernameInput('');
       setPasswordInput('');
       setAuthError('');
+      setAuthMode(null);
     } else {
       setAuthError(result.error);
     }
   }
 
+  function handleBack() {
+    setAuthMode(null);
+    setAuthError('');
+  }
+
   function handleLogout() {
     logout();
+    setAuthMode(null);
   }
 
   if (loggedInAs) {
@@ -116,6 +129,18 @@ function AuthPanel() {
     );
   }
 
+  if (authMode === null) {
+    return (
+      <div id="header-auth" className="site-auth">
+        <div className="auth-choice">
+          <button type="button" id="login-choice-btn" onClick={() => setAuthMode('login')}>Login</button>
+          <button type="button" id="register-choice-btn" onClick={() => setAuthMode('register')}>Register</button>
+        </div>
+        <NavLink to="/about" className="about-link">About</NavLink>
+      </div>
+    );
+  }
+
   return (
     <div id="header-auth" className="site-auth">
       <form id="auth-form" onSubmit={handleSubmit}>
@@ -130,9 +155,11 @@ function AuthPanel() {
             value={usernameInput}
             onChange={(event) => setUsernameInput(event.target.value)}
           />
-          <p className="field-tooltip" role="tooltip">
-            New here? Just enter a username and click Login to create an account.
-          </p>
+          {authMode === 'register' && (
+            <p className="field-tooltip" role="tooltip">
+              Password is optional -- leave it blank if you don't need to protect this username.
+            </p>
+          )}
         </div>
 
         <div className="field">
@@ -149,7 +176,8 @@ function AuthPanel() {
 
         {authError && <p className="field-error" role="alert">{authError}</p>}
 
-        <button type="submit" id="login-btn">Login</button>
+        <button type="button" id="auth-back-btn" onClick={handleBack}>Back</button>
+        <button type="submit" id="login-btn">{authMode === 'register' ? 'Register' : 'Login'}</button>
       </form>
       <NavLink to="/about" className="about-link">About</NavLink>
     </div>
