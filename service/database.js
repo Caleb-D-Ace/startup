@@ -10,43 +10,99 @@ const client = new MongoClient(url, {
     deprecationErrors: true,
   }
 });
-async function main() {
-  try {
-    // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
-    const db = client.db('paintwallTest');
-    const collection = db.collection('connectionTest');
-    // Send a ping to confirm a successful connection
-    await db.command({ ping: 1 });
-    console.log(`DB connected to ${config.hostname}`);
+const db = client.db('paintwall');
+// User collection: { username, password, tokens, xp, lastActive, profile }
+const userCollection = db.collection('users');
+// Pixel collection: { _id: "x,y", paletteIndex, userID, paintedAt }
+const pixelCollection = db.collection('pixels')
 
-    // Insert a document
-    const house = {
-      name: 'Beachfront views',
-      summary: 'From your bedroom to the beach, no shoes required',
-      property_type: 'Condo',
-      beds: 1,
-    };
-    await collection.insertOne(house);
+// --- Users ---
 
-    // Query the documents
-    const query = { property_type: 'Condo', beds: { $lt: 2 } };
-    const options = {
-      sort: { name: -1 },
-      limit: 10,
-    };
-    const cursor = collection.find(query, options);
-    const rentals = await cursor.toArray();
-    rentals.forEach((i) => console.log(i));
+/** @returns {object|null} the user document for this username, or null if none exists */
+async function getUserByUsername(username) {
 
-    // Delete documents
-    await collection.deleteMany(query);
-    
-  } catch(ex) {
-    console.log(`Database (${url}) error: ${ex.message}`);
-  } finally {
-    // Ensures that the client will close when you finish/error
-    await client.close();
-  }
 }
-main().catch(console.dir);
+
+/**
+ * @returns {object|null} the user document whose tokens array contains this
+ * token, or null. Mongo matches an array-field query like this against any
+ * element of the array automatically -- no special operator needed.
+ */
+async function getUserByToken(token) {
+
+}
+
+/** Inserts a brand-new user document. */
+async function addUser(user) {
+
+}
+
+/**
+ * Writes changes to an existing user document back to the database.
+ * Known inefficiency, accepted for now: this is a whole-document
+ * write, not a targeted $push/$pull/$inc -- fine for this project's scale,
+ * worth revisiting (a race on concurrent updates to the same user) later.
+ */
+async function updateUser(user) {
+
+}
+
+// --- Avatars ---
+
+/** @returns {{x:number,y:number,paletteIndex:number}[]|null} this user's saved avatar pixels, or null if none saved yet */
+async function getUserAvatar(userID) {
+
+}
+
+/** Saves/overwrites this user's avatar pixel data. */
+async function saveUserAvatar(userID, pixels) {
+
+}
+
+// --- Wall / pixels ---
+
+/** @returns {object|null} the pixel document at (x, y), or null if unpainted */
+async function getPixel(x, y) {
+
+}
+
+/** @returns {object[]} every currently-painted pixel */
+async function getCanvas() {
+
+}
+
+/**
+ * Upserts a batch of pixels in one round trip (one bulkWrite, not one
+ * network call per cell) -- insert-or-overwrite per cell, since repainting
+ * an already-painted cell is normal, expected behavior here.
+ */
+async function addPixels(pixels) {
+
+}
+
+/** Deletes every pixel document -- wipes the wall. */
+async function clearCanvas() {
+
+}
+
+// --- Leaderboard ---
+
+/** @returns {object[]} users with xp > 0, sorted descending by xp */
+async function getLeaderboard() {
+
+}
+
+module.exports = {
+  getUserByUsername,
+  getUserByToken,
+  addUser,
+  updateUser,
+  getUserAvatar,
+  saveUserAvatar,
+  getPixel,
+  getCanvas,
+  addPixels,
+  clearCanvas,
+  getLeaderboard,
+};
+
