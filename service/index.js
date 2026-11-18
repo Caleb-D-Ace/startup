@@ -118,6 +118,12 @@ apiRouter.put('/avatar', verifyAuth, async (req, res) => {
   res.status(204).end();
 });
 
+// Gets a user's avatar out of the database
+apiRouter.get('/avatar/:username', async (req, res) => {
+  const avatar = await database.getUserAvatar(req.params.username);
+  res.json(avatar);
+});
+
 // Reshapes the database's returned pixels collection into the frontend's expected
 // object shape: "x,y" -> {paletteIndex, username, paintedAt}
 function canvasToWallState(pixels) {
