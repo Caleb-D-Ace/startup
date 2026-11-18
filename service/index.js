@@ -4,6 +4,7 @@ const cookieParser = require('cookie-parser');
 const { v4: uuidv4 } = require('uuid');
 const { rasterizeStroke, getLevel } = require('./gameLogic');
 const database = require ('./database');
+const { data } = require('react-router-dom');
 
 const app = express();
 const port = process.argv.length > 2 ? process.argv[2] : 4000;
@@ -118,16 +119,31 @@ apiRouter.get('/user/me', verifyAuth, (req, res) => {
   res.send(userSummary(req.user));
 });
 
+// Reshapes the database's returned pixels collection into the frontend's expected
+// object shape: "x,y" -> {paletteIndex, username, paintedAt}
+function canvasToWallState(pixels) {
+  const wallState = {};
+  pixels.forEach((pixel) => {
+    wallState[pixel._id] = {
+      paletteIndex: pixel.paletteIndex,
+      username: pixel.userID,
+      paintedAt: pixel.paintedAt,
+    };
+  });
+  return wallState;
+}
+
 // Current wall pixel state, for initial page load. Public -- anyone can
 // view the wall, logged in or not.
-apiRouter.get('/wall', (req, res) => {
-  res.send(wallState);
+apiRouter.get('/wall', async (req, res) => {
+  const canvas = await database.getCanvas();
+  res.send(canvasToWallState(canvas));
 });
 
 // Get the currently selected pixel
-apiRouter.get('/wall/pixel/:x/:y', (req, res) => {
+apiRouter.get('/wall/pixel/:x/:y', async (req, res) => {
   const { x, y } = req.params;
-  res.json(wallState[`${x},${y}`] ?? null);
+  res.json(await database.getPixel(x, y));
 });
 
 // Submit a stroke. Protected -- painting requires a logged-in identity,
