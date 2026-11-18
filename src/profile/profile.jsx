@@ -51,19 +51,14 @@ export function Profile() {
     setPixelsVersion((v) => v + 1);
   }
 
-  // Repainting the same cell across multiple chunks appends a new entry
-  // each time rather than overwriting one in place (pixelsRef is
-  // append-only, same tradeoff as Wall.jsx's pixelsRef) -- fine for live
-  // drawing since overdrawing a pixel is harmless, but worth deduping
-  // before it's what actually gets persisted, since the avatar is meant to
-  // "stay small and simple to store". A plain Map pass is cheap here
-  // because it only runs on this explicit, infrequent click, not per chunk.
-  function handleSetAvatar() {
+  // Pass a deduped avatar drawing (to keep the image small and storable) to
+  // the database.
+  async function handleSetAvatar() {
     const deduped = new Map();
     pixelsRef.current.forEach(({ x, y, paletteIndex }) => {
       deduped.set(`${x},${y}`, { x, y, paletteIndex });
     });
-    saveAvatar(username, [...deduped.values()]);
+    await saveAvatar([...deduped.values()]);
     notifyAvatarChanged(); // tells the header's AvatarIcon (a different part of the tree) to re-read it
   }
 

@@ -165,12 +165,12 @@ export function subscribe(callback) {
   return () => subscribers.delete(callback);
 }
 
-export function saveAvatar(username, pixels) {
-  try {
-    localStorage.setItem(AVATAR_STORAGE_KEY_PREFIX + username, JSON.stringify(pixels));
-  } catch {
-    // fine for a mock
-  }
+export async function saveAvatar(pixels) {
+  await fetch("/api/avatar", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ pixels }),
+  });
 }
 
 export function loadAvatar(username) {
