@@ -122,6 +122,19 @@ function canvasToWallState(pixels) {
   return wallState;
 }
 
+// Reshapes the database's returned pixel document into the frontend's expected shape
+// {paletteIndex, username, paintedAt} or null
+function formatPixel(pixel) {
+  if (!pixel) {
+    return null;
+  }
+  return {
+    paletteIndex: pixel.paletteIndex,
+    username: pixel.userID,
+    paintedAt: pixel.paintedAt,
+  };
+}
+
 // Current wall pixel state, for initial page load. Public -- anyone can
 // view the wall, logged in or not.
 apiRouter.get('/wall', async (req, res) => {
@@ -132,7 +145,8 @@ apiRouter.get('/wall', async (req, res) => {
 // Get the currently selected pixel
 apiRouter.get('/wall/pixel/:x/:y', async (req, res) => {
   const { x, y } = req.params;
-  res.json(await database.getPixel(x, y));
+  const pixel = await database.getPixel(x, y);
+  res.json(formatPixel(pixel));
 });
 
 // Submit a stroke. Protected -- painting requires a logged-in identity,
