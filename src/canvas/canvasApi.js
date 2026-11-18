@@ -62,8 +62,6 @@ const QUICK_SWATCH_SOURCE_COLORS = [
 
 export const QUICK_SWATCHES = [...new Set(QUICK_SWATCH_SOURCE_COLORS.map(hexToPaletteIndex))];
 
-const AVATAR_STORAGE_KEY_PREFIX = "paintwall-avatar-";
-
 const subscribers = new Set();
 
 // Caps how often one username's painting generates an activity
@@ -173,13 +171,10 @@ export async function saveAvatar(pixels) {
   });
 }
 
-export function loadAvatar(username) {
-  try {
-    const raw = localStorage.getItem(AVATAR_STORAGE_KEY_PREFIX + username);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
+/** @returns {{x:number,y:number,paletteIndex:number}[]|null} this user's saved avatar, or null if none saved yet. */
+export async function loadAvatar(username) {
+  const response = await fetch(`/api/avatar/${username}`);
+  return response.json();
 }
 
 // Generic FIFO-capped-per-username localStorage store, so an unbounded
