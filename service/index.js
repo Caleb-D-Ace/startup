@@ -8,7 +8,10 @@ const database = require ('./database');
 const app = express();
 const port = process.argv.length > 2 ? process.argv[2] : 4000;
 app.use(express.static('public'));
-app.use(express.json());
+// Default 100kb is too small for an avatar save -- it sends its whole
+// pixel list in one request, unlike wall strokes which arrive in small
+// chunks. 5mb comfortably covers even a densely-painted 400x400 avatar.
+app.use(express.json({ limit: '5mb' }));
 app.use(cookieParser());
 
 const authCookieName = 'token';
