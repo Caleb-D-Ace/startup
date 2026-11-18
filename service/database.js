@@ -20,7 +20,7 @@ const pixelCollection = db.collection('pixels')
 
 /** @returns {object|null} the user document for this username, or null if none exists */
 async function getUserByUsername(username) {
-
+  return userCollection.findOne({username: username});
 }
 
 /**
@@ -29,12 +29,12 @@ async function getUserByUsername(username) {
  * element of the array automatically -- no special operator needed.
  */
 async function getUserByToken(token) {
-
+  return userCollection.findOne({tokens: token});
 }
 
 /** Inserts a brand-new user document. */
 async function addUser(user) {
-
+  await userCollection.insertOne(user);
 }
 
 /**
@@ -43,8 +43,9 @@ async function addUser(user) {
  * write, not a targeted $push/$pull/$inc -- fine for this project's scale,
  * worth revisiting (a race on concurrent updates to the same user) later.
  */
-async function updateUser(user) {
-
+// Changes: { xp: newXP, lastActive: now }
+async function updateUser(username, changes) {
+  await userCollection.updateOne({ username: username }, { $set: changes });
 }
 
 // --- Avatars ---

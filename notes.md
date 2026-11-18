@@ -124,4 +124,7 @@ Project notes:
     }
   }
 }`
-- 
+
+## Database
+- DO NOT include dbConfig.json in your repository if that's where the credentials for the database reside.
+- upsert = update insert (update if exists, insert if doesn't)
