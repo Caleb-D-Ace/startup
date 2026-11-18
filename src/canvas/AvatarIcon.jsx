@@ -8,7 +8,7 @@
 // Before anyone's ever saved an avatar, there's nothing to draw -- falls
 // back to the generic placeholder image instead of an empty square.
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { loadAvatar, paletteIndexToHex } from './canvasApi';
 
 const AVATAR_SIZE = 400; // must match Profile.jsx's AVATAR_SIZE -- that's what loadAvatar's saved coordinates are in
@@ -23,7 +23,26 @@ const GENERIC_AVATAR_SRC = '/images/generic_profile.png';
  */
 export function AvatarIcon({ username, avatarVersion, size = 32 }) {
   const canvasRef = useRef(null);
-  const pixels = username ? loadAvatar(username) : null;
+  const [pixels, setPixels] = useState(null);
+
+  // loadAvatar is a real fetch now -- re-run whenever username or
+  // avatarVersion changes, same triggers as before.
+  useEffect(() => {
+    if (!username) {
+      setPixels(null);
+      return;
+    }
+    let cancelled = false;
+    loadAvatar(username).then((avatar) => {
+      if (!cancelled) {
+        setPixels(avatar);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [username, avatarVersion]);
+
   const hasAvatar = Boolean(pixels && pixels.length > 0);
 
   useEffect(() => {
@@ -36,10 +55,7 @@ export function AvatarIcon({ username, avatarVersion, size = 32 }) {
       ctx.fillStyle = paletteIndexToHex(paletteIndex);
       ctx.fillRect(x, y, 1, 1);
     });
-    // pixels is re-read fresh from loadAvatar every render, not a stable
-    // dependency -- username/avatarVersion/hasAvatar are the real triggers.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [username, avatarVersion, hasAvatar]);
+  }, [pixels, hasAvatar]);
 
   if (!hasAvatar) {
     return (
