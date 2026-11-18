@@ -51,46 +51,61 @@ async function updateUser(username, changes) {
 // --- Avatars ---
 
 /** @returns {{x:number,y:number,paletteIndex:number}[]|null} this user's saved avatar pixels, or null if none saved yet */
-async function getUserAvatar(userID) {
-
+async function getUserAvatar(username) {
+  const user = await userCollection.findOne({ username: username }, { projection: { profile: 1, _id: 0 } });
+  return user?.profile ?? null; // this is a cool bit of syntax. '?' handles null user, '??' handles nonexistent avatars.
 }
 
 /** Saves/overwrites this user's avatar pixel data. */
-async function saveUserAvatar(userID, pixels) {
-
+async function saveUserAvatar(username, pixels) {
+  await userCollection.updateOne({ username: username }, { $set: { profile: pixels } });
 }
 
 // --- Wall / pixels ---
 
 /** @returns {object|null} the pixel document at (x, y), or null if unpainted */
 async function getPixel(x, y) {
-
+  return pixelCollection.findOne({ _id: `${x},${y}` });
 }
 
 /** @returns {object[]} every currently-painted pixel */
 async function getCanvas() {
-
+  return pixelCollection.find({}).toArray();
 }
 
 /**
  * Upserts a batch of pixels in one round trip (one bulkWrite, not one
  * network call per cell) -- insert-or-overwrite per cell, since repainting
  * an already-painted cell is normal, expected behavior here.
+ * @param {{x:number, y:number, paletteIndex:number, userID:string, paintedAt:number}[]} pixels
  */
 async function addPixels(pixels) {
-
+  if (pixels.length === 0) {
+    return;
+  }
+  const operations = pixels.map((pixel) => ({
+    updateOne: {
+      filter: { _id: `${pixel.x},${pixel.y}` },
+      update: { $set: { paletteIndex: pixel.paletteIndex, userID: pixel.userID, paintedAt: pixel.paintedAt } },
+      upsert: true,
+    },
+  }));
+  await pixelCollection.bulkWrite(operations);
 }
 
 /** Deletes every pixel document -- wipes the wall. */
 async function clearCanvas() {
-
+  await pixelCollection.deleteMany({});
 }
 
 // --- Leaderboard ---
 
 /** @returns {object[]} users with xp > 0, sorted descending by xp */
 async function getLeaderboard() {
-
+  return userCollection
+    .find({ xp: { $gt: 0 } }, { projection: { username: 1, xp: 1, lastActive: 1, _id: 0 } })
+    .sort({ xp: -1 })
+    .toArray();
 }
 
 module.exports = {
