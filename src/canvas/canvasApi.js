@@ -1,7 +1,7 @@
-// Canvas API: wall data (strokes, pixels, leaderboard) hits the real,
-// MongoDB-backed Express service now. Avatars have real endpoints too
-// (service/index.js) but aren't wired up here yet -- saveAvatar/loadAvatar
-// and quick-swatches below are still client-only localStorage mocks.
+// Canvas API: wall data, avatars, and the leaderboard all hit the real,
+// MongoDB-backed Express service now. Quick-swatches below are the one
+// piece still a client-only localStorage mock -- deliberately so, it's
+// per-device preference, not shared data.
 
 export const CANVAS_WIDTH = 854;
 export const CANVAS_HEIGHT = 480;
@@ -126,7 +126,19 @@ export async function clearCanvas() {
  * paletteIndex }. No username -- the server derives the painter from the
  * auth cookie. Returns { pixels, username, xp, level }.
  */
-export async function submitStroke(stroke) {
+// Serializes submissions so overlapping requests from a fast drag can't
+// resolve out of order and let an earlier stroke overwrite a later one.
+let pendingSubmission = Promise.resolve();
+
+export function submitStroke(stroke) {
+  const result = pendingSubmission.then(() => submitStrokeNow(stroke));
+  // Swallowed here so one failed submission doesn't break the chain for
+  // whatever's queued after it -- the caller still sees the real rejection.
+  pendingSubmission = result.catch(() => {});
+  return result;
+}
+
+async function submitStrokeNow(stroke) {
   const response = await fetch("/api/wall/strokes", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
