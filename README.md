@@ -209,9 +209,9 @@ For this deliverable I did the following. I checked the box `[x]` and added a de
 
 For this deliverable I did the following. I checked the box `[x]` and added a description for things I completed.
 
-- [ ] I completed the prerequisites for this deliverable (Simon deployed, GitHub link, Git commits)
-- [ ] **Stores data in MongoDB** - I did not complete this part of the deliverable.
-- [ ] **Stores credentials in MongoDB** - I did not complete this part of the deliverable.
+- [X] I completed the prerequisites for this deliverable (Simon deployed, GitHub link, Git commits)
+- [X] **Stores data in MongoDB** - Two collections (one for users, one for pixels) stored in MongoDB and accessible from the url. No issues in accessing discovered.
+- [X] **Stores credentials in MongoDB** - Users are able to register, log in, save avatars, and view leaderboards from data stored in MongoDB
 
 ## 🚀 WebSocket deliverable
 
