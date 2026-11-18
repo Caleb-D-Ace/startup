@@ -27,9 +27,15 @@ export function Profile() {
   // (e.g. switching accounts) -- same reset signal wall.jsx uses.
   const [avatarResetToken, setAvatarResetToken] = useState(0);
 
+  // True once the user has painted locally since the last load -- guards
+  // against the fetch below clobbering fresh painting if it resolves after
+  // they've already started drawing.
+  const hasPaintedRef = useRef(false);
+
   // Re-fetches whenever username resolves or changes. cancelled guards
   // against a stale response landing after a newer fetch started.
   useEffect(() => {
+    hasPaintedRef.current = false;
     if (!username) {
       pixelsRef.current = [];
       setPixelsVersion((v) => v + 1);
@@ -38,7 +44,7 @@ export function Profile() {
     }
     let cancelled = false;
     loadAvatar(username).then((avatar) => {
-      if (cancelled) {
+      if (cancelled || hasPaintedRef.current) {
         return;
       }
       pixelsRef.current = avatar ?? [];
@@ -53,12 +59,13 @@ export function Profile() {
   const brush = { shape: BRUSH_SHAPE, size: brushSize, paletteIndex: brushColor };
 
   // XP always comes from the server (wall painting), never the local
-  // avatar canvas -- AuthContext's xp is already kept current.
+  // avatar canvas. AuthContext's xp is already kept current.
   const levelProgress = getLevelProgress(xp);
 
   // Mirrors canvasApi.submitStroke's rasterization, minus persistence, since
   // the avatar has no server-side grid to sync with.
   function handleStrokeChunk(chunk) {
+    hasPaintedRef.current = true;
     rasterizeStroke(chunk, AVATAR_SIZE, AVATAR_SIZE).forEach(({ x, y }) => {
       pixelsRef.current.push({ x, y, paletteIndex: chunk.paletteIndex });
     });

@@ -175,18 +175,37 @@ export function subscribe(callback) {
   return () => subscribers.delete(callback);
 }
 
+// Parallel arrays instead of an array of {x,y,paletteIndex} objects --
+// avoids repeating those three key names per pixel, which is most of the
+// weight in a full avatar sent as one request (unlike wall strokes, which
+// arrive in small chunks). ~70% smaller on the wire for a densely-painted
+// avatar; the array-of-objects shape stays the in-memory/storage format
+// everywhere else, this conversion only happens at the fetch boundary.
+function toParallelArrays(pixels) {
+  return {
+    xs: pixels.map((p) => p.x),
+    ys: pixels.map((p) => p.y),
+    palette: pixels.map((p) => p.paletteIndex),
+  };
+}
+
+function fromParallelArrays({ xs, ys, palette }) {
+  return xs.map((x, i) => ({ x, y: ys[i], paletteIndex: palette[i] }));
+}
+
 export async function saveAvatar(pixels) {
   await fetch("/api/avatar", {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ pixels }),
+    body: JSON.stringify(toParallelArrays(pixels)),
   });
 }
 
 /** @returns {{x:number,y:number,paletteIndex:number}[]|null} this user's saved avatar, or null if none saved yet. */
 export async function loadAvatar(username) {
   const response = await fetch(`/api/avatar/${username}`);
-  return response.json();
+  const data = await response.json();
+  return data ? fromParallelArrays(data) : null;
 }
 
 // Generic FIFO-capped-per-username localStorage store, so an unbounded
