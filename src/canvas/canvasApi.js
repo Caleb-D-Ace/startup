@@ -1,25 +1,14 @@
-// Canvas API, now a hybrid: wall data (getPixelOwner, submitStroke,
-// getCanvasStateCache/fetchCanvasState, clearCanvas, getLeaderboard) hits
-// the real Express service in service/index.js. Avatars and quick-swatch
-// picks are still mocked via localStorage, and the fake-peer "live
-// activity" simulation below stays purely client-side -- both are
-// stand-ins for work that belongs to a later deliverable (avatars/swatches
-// aren't urgent to migrate; the simulation is an explicit placeholder for
-// real WebSocket pushes), not for the wall itself.
-//
-// The real server stores wall state in memory, not yet a database -- that's
-// the next deliverable -- so it's lost on restart, same caveat the mock had.
-
-import { rasterizeStroke } from "./brush";
+// Canvas API: wall data (strokes, pixels, leaderboard) hits the real,
+// MongoDB-backed Express service now. Avatars have real endpoints too
+// (service/index.js) but aren't wired up here yet -- saveAvatar/loadAvatar
+// and quick-swatches below are still client-only localStorage mocks.
 
 export const CANVAS_WIDTH = 854;
 export const CANVAS_HEIGHT = 480;
 
 // ---- The 256-color palette (true "8-bit color") -------------------------
-// 3 bits red, 3 bits green, 2 bits blue -- 8x8x4 = exactly 256 values, the
-// classic RGB332 scheme (same idea as old VGA 8-bit color modes). This helps
-// keep pixel information small so that network requests and responses don't
-// take up much time or space.
+// 3 bits red, 3 bits green, 2 bits blue -- 8x8x4 = 256 values (RGB332,
+// same idea as old VGA 8-bit color). Keeps pixel data small over the wire.
 function clampChannel(value) {
   return Math.min(255, Math.max(0, value));
 }
@@ -57,12 +46,9 @@ export function paletteIndexToHex(index) {
 // The full addressable 256-color space, generated rather than hand-listed.
 export const PALETTE = Array.from({ length: 256 }, (_, index) => paletteIndexToHex(index));
 
-// A curated subset for the clickable swatch-picker UI -- not the only
-// paintable colors, just a cohesive shortcut grid (originally PICO-8's
-// palette) so people aren't hand-picking from 256 buttons. Each hex here
-// gets snapped onto its real slot in the 256-space via hexToPaletteIndex,
-// so a "quick pick" click and a matched suggestion are the exact same kind
-// of value -- deduped in case two source colors land on the same index.
+// A curated shortcut grid (PICO-8's palette), snapped onto the real
+// 256-space via hexToPaletteIndex so a quick-pick and a suggestion are
+// the same kind of value -- deduped in case two land on the same index.
 const QUICK_SWATCH_SOURCE_COLORS = [
   "#000000", "#1D2B53", "#7E2553", "#008751",
   "#AB5236", "#5F574F", "#C2C3C7", "#FFF1E8",
@@ -78,25 +64,11 @@ export const QUICK_SWATCHES = [...new Set(QUICK_SWATCH_SOURCE_COLORS.map(hexToPa
 
 const AVATAR_STORAGE_KEY_PREFIX = "paintwall-avatar-";
 
-const FAKE_USERNAMES = ["Sarah", "anon_guest", "Markiploer", "thy_mother", "Gryffindor seeker", "Dracaena Malfoy", "Sauceror1999"];
-const SIMULATION_INTERVAL_MS = 4000;
-
-// Confined to a corner rather than scattered across the whole canvas, so
-// simulated activity doesn't visually clutter actual painted artwork (e.g.
-// in an exported/graded screenshot) -- fractions of CANVAS_WIDTH/HEIGHT
-// rather than fixed pixel sizes so this stays "a corner" if those change.
-const FAKE_ACTIVITY_REGION_WIDTH = Math.round(CANVAS_WIDTH * 0.2);
-const FAKE_ACTIVITY_REGION_HEIGHT = Math.round(CANVAS_HEIGHT * 0.2);
-
 const subscribers = new Set();
-let simulationTimer = null;
 
-// Caps how often one username's painting generates an "activity"
+// Caps how often one username's painting generates an activity
 // notification -- a fast drag flushes a chunk every ~28px/250ms, which
-// would otherwise flood the feed with one user's own repeated messages.
-// In-memory only, uncapped in size -- a Map entry here is a string key
-// and a number, cheap enough not to need the FIFO eviction the
-// localStorage-backed stores below use.
+// would otherwise flood the feed with repeats.
 const ACTIVITY_THROTTLE_MS = 5000;
 const lastActivityAt = new Map(); // username -> timestamp of its last emitted activity notification
 
@@ -132,11 +104,9 @@ export async function fetchCanvasState() {
 }
 
 /**
- * Wipes every painted pixel. For testing/demoing, not a regular end-user
- * feature. Leaves xp alone -- it's lifetime, not tied to the canvas's
- * current contents. Only notifies on success -- an irreversible,
- * all-users-affecting action shouldn't show as cleared locally if the
- * request actually failed.
+ * Wipes every painted pixel (testing/demo only). Leaves xp alone -- it's
+ * lifetime, not tied to current contents. Only notifies on success, so a
+ * failed request doesn't show as cleared locally.
  */
 export async function clearCanvas() {
   const response = await fetch("/api/wall", { method: "DELETE" });
@@ -154,12 +124,9 @@ export async function clearCanvas() {
 }
 
 /**
- * Submits a finished stroke, or one chunk of a longer one (PaintCanvas
- * flushes every CHUNK_DISTANCE_PX/CHUNK_TIME_MS rather than waiting for the
- * whole drag -- this function doesn't know or care which):
- * { points: [{x, y}, ...], shape, size, paletteIndex }. No username -- the
- * server derives the painter from the auth cookie, not anything the client
- * claims. Returns the server's { pixels, username, xp, level }.
+ * Submits a stroke or one chunk of a longer one: { points, shape, size,
+ * paletteIndex }. No username -- the server derives the painter from the
+ * auth cookie. Returns { pixels, username, xp, level }.
  */
 export async function submitStroke(stroke) {
   const response = await fetch("/api/wall/strokes", {
@@ -172,9 +139,7 @@ export async function submitStroke(stroke) {
 
   notify({ type: "stroke", pixels, username });
 
-  // One activity message per submission, throttled per username -- real
-  // strokes and the fake-peer stroke above share this same path rather
-  // than each building their own message.
+  // One activity message per submission, throttled per username.
   if (pixels.length > 0) {
     const now = Date.now();
     const lastNotifiedAt = lastActivityAt.get(username) ?? 0;
@@ -194,21 +159,10 @@ export async function getPixelOwner(x, y) {
   return response.json();
 }
 
-/**
- * Subscribes to live updates (stroke events, simulated activity messages).
- * Returns an unsubscribe function -- call it from a useEffect cleanup.
- * The simulated-peer timer only runs while at least one subscriber exists.
- */
+/** Subscribes to live updates. Returns an unsubscribe function for a useEffect cleanup. */
 export function subscribe(callback) {
   subscribers.add(callback);
-  startSimulation();
-
-  return function unsubscribe() {
-    subscribers.delete(callback);
-    if (subscribers.size === 0) {
-      stopSimulation();
-    }
-  };
+  return () => subscribers.delete(callback);
 }
 
 export function saveAvatar(username, pixels) {
@@ -228,17 +182,10 @@ export function loadAvatar(username) {
   }
 }
 
-// Generic FIFO-capped-per-username localStorage store. Anyone can "log in"
-// as a new username at any time (see AuthContext), unbounded and not under
-// our control -- without a cap, someone could balloon localStorage by
-// cycling through thousands of throwaway usernames. The usersListKey
-// tracks which usernames currently have data, in plain FIFO insertion
-// order (not MRU -- re-saving an existing username's value just updates it
-// in place, it doesn't move them in the queue): once maxUsers is hit, the
-// username that was tracked *first* is evicted when a new one arrives,
-// regardless of how recently that first one was actually used. Simple, and
-// the stated cost (an idle username can eventually lose its data) is an
-// accepted tradeoff, not a bug.
+// Generic FIFO-capped-per-username localStorage store, so an unbounded
+// stream of new usernames (anyone can "log in" as a new one) can't balloon
+// storage -- oldest-tracked username gets evicted first once maxUsers is
+// hit, regardless of recent use.
 function createPerUserStore(storageKeyPrefix, usersListKey, maxUsers) {
   function loadTrackedUsers() {
     try {
@@ -310,45 +257,4 @@ export function loadQuickSwatches(username) {
 export async function getLeaderboard() {
   const response = await fetch("/api/leaderboard");
   return response.json();
-}
-
-// ---- Simulated peer activity --------------------------------------------
-// Stands in for other users' WebSocket-pushed strokes, per the course's own
-// setInterval-mocking example -- makes the live activity feed and viewer
-// count feel alive without a real second user or a real server.
-
-function paintFakeStroke() {
-  const username = FAKE_USERNAMES[Math.floor(Math.random() * FAKE_USERNAMES.length)];
-  const paletteIndex = Math.floor(Math.random() * PALETTE.length);
-  const x = CANVAS_WIDTH - FAKE_ACTIVITY_REGION_WIDTH + Math.floor(Math.random() * FAKE_ACTIVITY_REGION_WIDTH);
-  const y = Math.floor(Math.random() * FAKE_ACTIVITY_REGION_HEIGHT);
-
-  // Purely local/visual, unlike a real stroke -- a fake peer has no real
-  // account or auth token to submit with, so this notifies subscribers
-  // directly instead of going through submitStroke. Never touches the
-  // shared server-held wall and never earns xp; PaintCanvas/Wall can't
-  // tell the difference when rendering it, since it's the same "stroke"
-  // event shape submitStroke emits.
-  const cells = rasterizeStroke({ points: [{ x, y }], shape: "round", size: 0 }, CANVAS_WIDTH, CANVAS_HEIGHT);
-  const pixels = cells.map((cell) => ({ ...cell, paletteIndex, username }));
-  notify({ type: "stroke", pixels, username });
-
-  const now = Date.now();
-  const lastNotifiedAt = lastActivityAt.get(username) ?? 0;
-  if (now - lastNotifiedAt >= ACTIVITY_THROTTLE_MS) {
-    lastActivityAt.set(username, now);
-    notify({ type: "activity", username, message: `${username} painted near (${x}, ${y})` });
-  }
-}
-
-function startSimulation() {
-  if (simulationTimer) {
-    return;
-  }
-  simulationTimer = setInterval(paintFakeStroke, SIMULATION_INTERVAL_MS);
-}
-
-function stopSimulation() {
-  clearInterval(simulationTimer);
-  simulationTimer = null;
 }

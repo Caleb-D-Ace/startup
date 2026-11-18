@@ -155,11 +155,10 @@ export function Wall() {
     };
   }, []);
 
-  // Distinct usernames seen this session (real strokes and simulated
-  // fake-peer ones alike), including yourself -- there's no real presence
-  // tracking in this mock (no join/leave, no real other clients), so this
-  // is deliberately simple: a monotonically-growing count of "who's shown
-  // up," not an attempt to fake accurate live join/leave dynamics.
+  // Distinct usernames seen this session, including yourself -- there's no
+  // real presence tracking yet (no join/leave, pending the WebSocket
+  // deliverable), so this is deliberately simple: a monotonically-growing
+  // count of "who's shown up," not real live join/leave dynamics.
   const viewerUsernamesRef = useRef(new Set());
   const [viewerCount, setViewerCount] = useState(0);
   const [activityFeed, setActivityFeed] = useState([]);
