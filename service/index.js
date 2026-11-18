@@ -111,20 +111,36 @@ apiRouter.get('/user/me', verifyAuth, (req, res) => {
   res.send(userSummary(req.user));
 });
 
+// Parallel arrays on the wire instead of an array of {x,y,paletteIndex}
+// objects -- ~70% smaller for a full avatar sent in one request. Database
+// storage stays array-of-objects; this conversion only happens here, at
+// the HTTP boundary.
+function pixelsToParallelArrays(pixels) {
+  return {
+    xs: pixels.map((p) => p.x),
+    ys: pixels.map((p) => p.y),
+    palette: pixels.map((p) => p.paletteIndex),
+  };
+}
+
+function parallelArraysToPixels({ xs, ys, palette }) {
+  return xs.map((x, i) => ({ x, y: ys[i], paletteIndex: palette[i] }));
+}
+
 // Save a user's custom avatar into the database. Protected by authToken.
 apiRouter.put('/avatar', verifyAuth, async (req, res) => {
-  const { pixels } = req.body;
-  if (!Array.isArray(pixels)) {
-    return res.status(400).send({ msg: 'pixels required' });
+  const { xs, ys, palette } = req.body;
+  if (!Array.isArray(xs) || !Array.isArray(ys) || !Array.isArray(palette)) {
+    return res.status(400).send({ msg: 'xs, ys, palette required' });
   }
-  await database.saveUserAvatar(req.user.username, pixels);
+  await database.saveUserAvatar(req.user.username, parallelArraysToPixels({ xs, ys, palette }));
   res.status(204).end();
 });
 
 // Gets a user's avatar out of the database
 apiRouter.get('/avatar/:username', async (req, res) => {
   const avatar = await database.getUserAvatar(req.params.username);
-  res.json(avatar);
+  res.json(avatar ? pixelsToParallelArrays(avatar) : null);
 });
 
 // Reshapes the database's returned pixels collection into the frontend's expected
