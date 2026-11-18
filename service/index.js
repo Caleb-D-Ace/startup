@@ -32,14 +32,6 @@ const users = [];
 // bytes across a painted wall.
 const wallState = {};
 
-async function getUserByUsername(username) {
-  return await database.getUserByUsername(username);
-}
-
-async function getUserByToken(token) {
-  return await database.getUserByToken(token);
-}
-
 // Mints a fresh token for this login, remembers it on the user (so several
 // browsers/devices can be logged in as the same user at once), and sets it
 // as an httpOnly cookie so client JS never has direct access to it.
@@ -72,7 +64,7 @@ apiRouter.post('/auth/create', async (req, res) => {
   if (!username) {
     return res.status(400).send({ msg: 'Username (and password, if username has one) required' });
   }
-  if (getUserByUsername(username)) {
+  if (database.getUserByUsername(username)) {
     return res.status(409).send({ msg: 'Existing user' });
   }
 
@@ -91,7 +83,7 @@ apiRouter.post('/auth/create', async (req, res) => {
 // Log in an existing user
 apiRouter.post('/auth/login', async (req, res) => {
   const { username, password } = req.body;
-  const user = getUserByUsername(username);
+  const user = await database.getUserByUsername(username);
   if (user && (await bcrypt.compare(password ?? '', user.password))) {
     createSession(res, user);
     return res.send(userSummary(user));
@@ -100,9 +92,9 @@ apiRouter.post('/auth/login', async (req, res) => {
 });
 
 // Log out the current user
-apiRouter.delete('/auth/logout', (req, res) => {
+apiRouter.delete('/auth/logout', async (req, res) => {
   const token = req.cookies[authCookieName];
-  const user = getUserByToken(token);
+  const user = await database.getUserByToken(token);
   if (user) {
     user.tokens = user.tokens.filter((t) => t !== token);
   }
@@ -111,8 +103,8 @@ apiRouter.delete('/auth/logout', (req, res) => {
 });
 
 // Middleware that rejects requests without a valid auth cookie
-const verifyAuth = (req, res, next) => {
-  const user = getUserByToken(req.cookies[authCookieName]);
+const verifyAuth = async (req, res, next) => {
+  const user = await database.getUserByToken(req.cookies[authCookieName]);
   if (user) {
     req.user = user;
     next();
