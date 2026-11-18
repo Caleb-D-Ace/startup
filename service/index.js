@@ -3,6 +3,7 @@ const bcrypt = require ('bcryptjs');
 const cookieParser = require('cookie-parser');
 const { v4: uuidv4 } = require('uuid');
 const { rasterizeStroke, getLevel } = require('./gameLogic');
+const database = require ('./database');
 
 const app = express();
 const port = process.argv.length > 2 ? process.argv[2] : 4000;
@@ -31,12 +32,12 @@ const users = [];
 // bytes across a painted wall.
 const wallState = {};
 
-function getUserByUsername(username) {
-  return users.find((u) => u.username === username);
+async function getUserByUsername(username) {
+  return await database.getUserByUsername(username);
 }
 
-function getUserByToken(token) {
-  return users.find((u) => u.tokens.includes(token));
+async function getUserByToken(token) {
+  return await database.getUserByToken(token);
 }
 
 // Mints a fresh token for this login, remembers it on the user (so several
@@ -89,8 +90,9 @@ apiRouter.post('/auth/create', async (req, res) => {
 
 // Log in an existing user
 apiRouter.post('/auth/login', async (req, res) => {
-  const user = getUserByUsername(req.body.username);
-  if (user && (await bcrypt.compare(req.body.password ?? '', user.password))) {
+  const { username, password } = req.body;
+  const user = getUserByUsername(username);
+  if (user && (await bcrypt.compare(password ?? '', user.password))) {
     createSession(res, user);
     return res.send(userSummary(user));
   }
