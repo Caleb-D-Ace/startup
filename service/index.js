@@ -108,6 +108,16 @@ apiRouter.get('/user/me', verifyAuth, (req, res) => {
   res.send(userSummary(req.user));
 });
 
+// Save a user's custom avatar into the database. Protected by authToken.
+apiRouter.put('/avatar', verifyAuth, async (req, res) => {
+  const { pixels } = req.body;
+  if (!Array.isArray(pixels)) {
+    return res.status(400).send({ msg: 'pixels required' });
+  }
+  await database.saveUserAvatar(req.user.username, pixels);
+  res.status(204).end();
+});
+
 // Reshapes the database's returned pixels collection into the frontend's expected
 // object shape: "x,y" -> {paletteIndex, username, paintedAt}
 function canvasToWallState(pixels) {
