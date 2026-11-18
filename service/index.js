@@ -4,7 +4,6 @@ const cookieParser = require('cookie-parser');
 const { v4: uuidv4 } = require('uuid');
 const { rasterizeStroke, getLevel } = require('./gameLogic');
 const database = require ('./database');
-const { data } = require('react-router-dom');
 
 const app = express();
 const port = process.argv.length > 2 ? process.argv[2] : 4000;
@@ -21,24 +20,13 @@ const authCookieName = 'token';
 const CANVAS_WIDTH = 854;
 const CANVAS_HEIGHT = 480;
 
-// Create our empty lists for temp storage
-const users = [];
-
-// Every currently-painted pixel, keyed "x,y" -> { paletteIndex, username,
-// paintedAt }. Sparse on purpose -- most of an 854x480 wall stays unpainted.
-//
-// TODO(DB deliverable): once users live in a real table with an id, store
-// that int here instead of the username string -- a username repeats at
-// every pixel it painted, so interning it to a small int saves thousands of
-// bytes across a painted wall.
-const wallState = {};
-
 // Mints a fresh token for this login, remembers it on the user (so several
 // browsers/devices can be logged in as the same user at once), and sets it
 // as an httpOnly cookie so client JS never has direct access to it.
-function createSession(res, user) {
+async function createSession(res, user) {
   const token = uuidv4();
   user.tokens.push(token);
+  await database.updateUser(user.username, { tokens: user.tokens });
   res.cookie(authCookieName, token, {
     maxAge: 365 * 24 * 60 * 60 * 1000,
     secure: true,
@@ -65,7 +53,7 @@ apiRouter.post('/auth/create', async (req, res) => {
   if (!username) {
     return res.status(400).send({ msg: 'Username (and password, if username has one) required' });
   }
-  if (database.getUserByUsername(username)) {
+  if (await database.getUserByUsername(username)) {
     return res.status(409).send({ msg: 'Existing user' });
   }
 
@@ -75,9 +63,9 @@ apiRouter.post('/auth/create', async (req, res) => {
     // One token per login, so the same user can be logged in from several browsers
     tokens: [],
   };
-  users.push(user);
+  await database.addUser(user);
 
-  createSession(res, user);
+  await createSession(res, user);
   res.send(userSummary(user));
 });
 
@@ -86,7 +74,7 @@ apiRouter.post('/auth/login', async (req, res) => {
   const { username, password } = req.body;
   const user = await database.getUserByUsername(username);
   if (user && (await bcrypt.compare(password ?? '', user.password))) {
-    createSession(res, user);
+    await createSession(res, user);
     return res.send(userSummary(user));
   }
   res.status(401).send({ msg: 'Unauthorized' });
@@ -97,7 +85,8 @@ apiRouter.delete('/auth/logout', async (req, res) => {
   const token = req.cookies[authCookieName];
   const user = await database.getUserByToken(token);
   if (user) {
-    user.tokens = user.tokens.filter((t) => t !== token);
+    const tokens = user.tokens.filter((t) => t !== token);
+    await database.updateUser(user.username, { tokens });
   }
   res.clearCookie(authCookieName);
   res.status(204).end();
@@ -161,33 +150,35 @@ apiRouter.post('/wall/strokes', verifyAuth, async (req, res) => {
   const cells = rasterizeStroke({ points, shape, size }, CANVAS_WIDTH, CANVAS_HEIGHT);
   const paintedAt = Date.now();
 
-  const pixels = cells.map(({ x, y }) => {
-    wallState[`${x},${y}`] = { paletteIndex, username: req.user.username, paintedAt };
-    return { x, y, paletteIndex, username: req.user.username };
-  });
+  const pixels = cells.map(({ x, y }) => ({ x, y, paletteIndex, username: req.user.username }));
+  const dbPixels = pixels.map((pixel) => ({ ...pixel, userID: pixel.username, paintedAt }));
 
-  req.user.xp = (req.user.xp ?? 0) + pixels.length;
-  req.user.lastActive = paintedAt;
+  const xp = (req.user.xp ?? 0) + pixels.length;
+  const lastActive = paintedAt;
 
-  res.send({ pixels, username: req.user.username, xp: req.user.xp, level: getLevel(req.user.xp) });
+  // Independent writes (different collections, no data dependency between
+  // them) -- run them concurrently rather than one after the other, since
+  // this route is the hottest path in the app (a chunk flushes every
+  // ~250ms during an active drag).
+  await Promise.all([
+    database.addPixels(dbPixels),
+    database.updateUser(req.user.username, { xp, lastActive }),
+  ]);
+
+  res.send({ pixels, username: req.user.username, xp, level: getLevel(xp) });
 });
 
 // Clears the wall. Protected -- powers the existing "Clear Canvas" testing
 // button.
-apiRouter.delete('/wall', verifyAuth, (req, res) => {
-  Object.keys(wallState).forEach(k => delete wallState[k]);
+apiRouter.delete('/wall', verifyAuth, async (req, res) => {
+  await database.clearCanvas();
   res.status(204).end();
 });
 
-// Leaderboard. Public, reads from the same in-memory xp data strokes write
-// to. Only users who've actually painted (xp > 0) show up, matching the
-// mock's behavior -- every freshly-registered user otherwise crowds the
-// board with zero-xp rows nobody wants to see.
-apiRouter.get('/leaderboard', (req, res) => {
-  const leaderboard = users
-    .filter((u) => (u.xp ?? 0) > 0)
-    .map((u) => ({ username: u.username, xp: u.xp, lastActive: u.lastActive ?? null }))
-    .sort((a, b) => b.xp - a.xp);
+// Leaderboard. Public -- database.getLeaderboard() already filters to xp > 0
+// and sorts descending, matching the old in-memory behavior.
+apiRouter.get('/leaderboard', async (req, res) => {
+  const leaderboard = await database.getLeaderboard();
   res.send(leaderboard);
 });
 
