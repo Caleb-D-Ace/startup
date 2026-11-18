@@ -15,35 +15,49 @@ export function Profile() {
   const [brushColor, setBrushColor] = useState(DEFAULT_BRUSH_COLOR);
   const [brushSize, setBrushSize] = useState(DEFAULT_BRUSH_SIZE);
 
-  // Same append-only contract PaintCanvas expects from Wall.jsx (see its
-  // own pixelsRef), seeded from this user's saved avatar instead of the
-  // shared wall. Painting only ever updates this local state -- nothing
-  // reaches canvasApi.saveAvatar until "Set Avatar" is clicked.
+  // Seeded from this user's saved avatar, not the shared wall -- same
+  // append-only contract as Wall.jsx's pixelsRef.
   const pixelsRef = useRef(null);
   if (pixelsRef.current === null) {
-    pixelsRef.current = username ? loadAvatar(username) ?? [] : [];
+    pixelsRef.current = [];
   }
   const [pixelsVersion, setPixelsVersion] = useState(0);
 
-  // AuthContext resolves username asynchronously after mount, so re-seed
-  // once it's known (and again on switching accounts without a reload).
+  // Forces a full redraw when pixelsRef gets replaced, not appended to
+  // (e.g. switching accounts) -- same reset signal wall.jsx uses.
+  const [avatarResetToken, setAvatarResetToken] = useState(0);
+
+  // Re-fetches whenever username resolves or changes. cancelled guards
+  // against a stale response landing after a newer fetch started.
   useEffect(() => {
-    pixelsRef.current = username ? loadAvatar(username) ?? [] : [];
-    setPixelsVersion((v) => v + 1);
+    if (!username) {
+      pixelsRef.current = [];
+      setPixelsVersion((v) => v + 1);
+      setAvatarResetToken((t) => t + 1);
+      return;
+    }
+    let cancelled = false;
+    loadAvatar(username).then((avatar) => {
+      if (cancelled) {
+        return;
+      }
+      pixelsRef.current = avatar ?? [];
+      setPixelsVersion((v) => v + 1);
+      setAvatarResetToken((t) => t + 1);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [username]);
 
   const brush = { shape: BRUSH_SHAPE, size: brushSize, paletteIndex: brushColor };
 
-  // XP only ever comes from the server (wall painting via POST
-  // /wall/strokes), never from the local-only avatar canvas above --
-  // matches the stats copy below ("pixels the server receives from you on
-  // the wall"). AuthContext's xp is already kept current from login/the
-  // stroke response, so this just reads it.
+  // XP always comes from the server (wall painting), never the local
+  // avatar canvas -- AuthContext's xp is already kept current.
   const levelProgress = getLevelProgress(xp);
 
-  // rasterizeStroke here mirrors exactly what canvasApi.submitStroke does
-  // for the wall, just without any persistence/notify step -- the avatar
-  // has no canonical server-side grid to stay in sync with.
+  // Mirrors canvasApi.submitStroke's rasterization, minus persistence, since
+  // the avatar has no server-side grid to sync with.
   function handleStrokeChunk(chunk) {
     rasterizeStroke(chunk, AVATAR_SIZE, AVATAR_SIZE).forEach(({ x, y }) => {
       pixelsRef.current.push({ x, y, paletteIndex: chunk.paletteIndex });
@@ -112,6 +126,7 @@ export function Profile() {
               height={AVATAR_SIZE}
               pixels={pixelsRef.current}
               pixelsVersion={pixelsVersion}
+              resetToken={avatarResetToken}
               brush={brush}
               onStrokeChunk={handleStrokeChunk}
             >
